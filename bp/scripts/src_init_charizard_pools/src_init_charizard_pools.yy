@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"src_init_charizard_pools",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"src_init_charizard_pools",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}
