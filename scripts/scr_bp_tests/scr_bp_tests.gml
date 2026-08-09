@@ -1,0 +1,45 @@
+function bp_test_check(_condition, _message) {
+    if (_condition) return true;
+    show_debug_message("BATTLEPETS TEST FAILED: " + _message);
+    return false;
+}
+
+function bp_run_self_tests(_catalog) {
+    var _passed = true;
+
+    for (var _players = 2; _players <= 8; _players++) {
+        for (var _team_size = 2; _team_size <= 4; _team_size++) {
+            var _names = [];
+            var _bots = [];
+            repeat (_players) {
+                array_push(_names, "Test " + string(array_length(_names) + 1));
+                array_push(_bots, false);
+            }
+            var _size_match = bp_match_create(_catalog, _names, _bots, _team_size, 0);
+            _passed = bp_test_check(array_length(_size_match.players) == _players, "player count") && _passed;
+            _passed = bp_test_check(array_length(_size_match.players[0].pets) == _team_size, "team size") && _passed;
+            _passed = bp_test_check(array_length(_size_match.order) == _players, "turn order size") && _passed;
+        }
+    }
+
+    var _shield_pet = bp_pet_state_create(_catalog.pets[0]);
+    _shield_pet.shield = 1;
+    var _blocked = bp_damage_pet(_shield_pet, 20, false);
+    _passed = bp_test_check(_blocked == 0 && _shield_pet.health == _shield_pet.definition.max_health && _shield_pet.shield == 0, "shield blocks one attack") && _passed;
+    var _unblocked = bp_damage_pet(_shield_pet, 20, true);
+    _passed = bp_test_check(_unblocked == 20 && _shield_pet.health == _shield_pet.definition.max_health - 20, "unblockable bypasses shield") && _passed;
+
+    var _match = bp_match_create(_catalog, ["Alpha", "Beta"], [false, false], 2, 0);
+    var _current = bp_current_player_index(_match);
+    var _actor = bp_first_legal_actor(_match, _current);
+    var _target_flat = bp_find_legal_target(_match, _current, _actor, "basic", -1, 1);
+    var _target_player = _target_flat div 2;
+    var _target_slot = _target_flat mod 2;
+    var _before = _match.players[_target_player].pets[_target_slot].health;
+    var _acted = bp_apply_action(_match, _current, _actor, "basic", _target_player, _target_slot);
+    _passed = bp_test_check(_acted && _match.action_number == 1, "legal basic attack") && _passed;
+    _passed = bp_test_check(_match.players[_target_player].pets[_target_slot].health < _before, "basic attack damage") && _passed;
+
+    show_debug_message(_passed ? "BATTLEPETS SELF-TESTS PASSED" : "BATTLEPETS SELF-TESTS FAILED");
+    return _passed;
+}

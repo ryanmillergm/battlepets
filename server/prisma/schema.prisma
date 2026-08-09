@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum ProfileAgeBand {
+  CHILD
+  TEEN
+  ADULT
+}
+
+enum MatchMode {
+  BOT
+  LOCAL
+  CASUAL
+  COMPETITIVE
+}
+
+enum LedgerKind {
+  MATCH_REWARD
+  DIRECT_PURCHASE
+  PACK_PURCHASE
+  DUPLICATE_REDEMPTION
+  PAYMENT
+  REFUND
+  ADMIN_ADJUSTMENT
+}
+
+model Account {
+  id                 String          @id @default(uuid())
+  email              String          @unique
+  passwordHash       String
+  emailVerifiedAt    DateTime?
+  role               AccountRole     @default(USER)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  profiles           PlayerProfile[]
+  consentReceipts    ConsentReceipt[]
+  currencyEntries    CurrencyLedger[]
+}
+
+model PlayerProfile {
+  id                 String          @id @default(uuid())
+  ownerAccountId     String
+  username           String
+  normalizedUsername String          @unique
+  avatarId           String
+  ageBand            ProfileAgeBand
+  chatEnabled        Boolean         @default(false)
+  usernameChangedAt  DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  owner              Account         @relation(fields: [ownerAccountId], references: [id], onDelete: Cascade)
+  inventory          InventoryItem[]
+  lobbyMemberships   LobbyMember[]
+  matchParticipants  MatchParticipant[]
+}
+
+model ConsentReceipt {
+  id             String   @id @default(uuid())
+  accountId      String
+  profileId      String?
+  policyVersion  String
+  consentType    String
+  granted        Boolean
+  providerRef    String?
+  createdAt      DateTime @default(now())
+  revokedAt      DateTime?
+  account        Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, consentType])
+}
+
+model RarityDefinition {
+  id           String                @id @default(uuid())
+  slug         String                @unique
+  displayName  String
+  displayOrder Int
+  colorHex     String
+  active       Boolean               @default(true)
+  pets         BattlepetDefinition[]
+}
+
+model BattlepetDefinition {
+  id              String          @id @default(uuid())
+  slug            String          @unique
+  displayName     String
+  contentVersion  Int             @default(1)
+  maxHealth       Int
+  tags            String[]
+  artManifest     Json
+  basicAttack     Json
+  superAttack     Json
+  ability         Json?
+  rarityId        String
+  directPrice     Int
+  starterEligible Boolean         @default(false)
+  active          Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  rarity          RarityDefinition @relation(fields: [rarityId], references: [id])
+  inventory       InventoryItem[]
+}
+
+model SpecialtyCardDefinition {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  displayName    String
+  contentVersion Int      @default(1)
+  artManifest    Json
+  rules          Json
+  active         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model InventoryItem {
+  profileId   String
+  battlepetId String
+  quantity    Int                  @default(1)
+  acquiredAt  DateTime             @default(now())
+  profile     PlayerProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  battlepet   BattlepetDefinition  @relation(fields: [battlepetId], references: [id])
+
+  @@id([profileId, battlepetId])
+}
+
+model CurrencyLedger {
+  id               String     @id @default(uuid())
+  accountId        String
+  profileId        String?
+  kind             LedgerKind
+  earnedDelta      Int        @default(0)
+  purchasedDelta   Int        @default(0)
+  idempotencyKey   String     @unique
+  referenceId      String?
+  metadata         Json?
+  createdAt        DateTime   @default(now())
+  account          Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, createdAt])
+}
+
+model Lobby {
+  id             String        @id @default(uuid())
+  hostProfileId  String
+  capacity       Int
+  teamSize       Int
+  turnSeconds    Int
+  mode           MatchMode
+  fillWithBots   Boolean       @default(false)
+  status         String        @default("WAITING")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  members        LobbyMember[]
+}
+
+model LobbyMember {
+  lobbyId   String
+  profileId String
+  joinedAt  DateTime      @default(now())
+  lobby     Lobby         @relation(fields: [lobbyId], references: [id], onDelete: Cascade)
+  profile   PlayerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([lobbyId, profileId])
+}
+
+model Match {
+  id             String             @id @default(uuid())
+  mode           MatchMode
+  contentVersion Int
+  state          Json
+  qualifying     Boolean            @default(false)
+  startedAt      DateTime           @default(now())
+  completedAt    DateTime?
+  participants   MatchParticipant[]
+  actions        MatchAction[]
+}
+
+model MatchParticipant {
+  id          String         @id @default(uuid())
+  matchId     String
+  profileId   String?
+  seat        Int
+  username    String
+  startedBot  Boolean        @default(false)
+  endedBot    Boolean        @default(false)
+  placement   Int?
+  match       Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  profile     PlayerProfile? @relation(fields: [profileId], references: [id])
+
+  @@unique([matchId, seat])
+}
+
+model MatchAction {
+  id             String   @id @default(uuid())
+  matchId        String
+  sequence       Int
+  idempotencyKey String   @unique
+  actorSeat      Int
+  command        Json
+  resultingState Json
+  createdAt      DateTime @default(now())
+  match          Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, sequence])
+}
