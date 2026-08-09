@@ -12,6 +12,8 @@
 
 Player order is randomized once at match start and then rotates. On a turn, the player selects one living, available pet and performs one legal action against any legal opposing pet. Eliminated players are skipped.
 
+Before the first turn, the game presents an animated shuffle that cycles through participant names, reveals who goes first, and displays the final turn order. The animation can be skipped with `Enter` or `Space`; skipping does not reroll the already-randomized order.
+
 A pet at zero health is knocked out for the match unless a valid revive effect restores it. A player is eliminated when no pet remains alive and no currently usable revive effect remains. The last non-eliminated player wins.
 
 ## Pets and attacks
@@ -41,6 +43,18 @@ Effects resolve in this order:
 6. Resolve knockouts and revive triggers.
 7. Advance durations and the turn.
 
+## Battle readability
+
+- Every pet card shows its basic and super attack names and current damage values to all players.
+- Two-pet teams use tall cards; three- and four-pet teams use a two-column compact grid so names and statistics remain readable in large matches.
+- Every player's specialty card is public, visually distinct from pet cards, and includes its effect description.
+- The acting pet and current target receive enlarged, color-coded selection outlines.
+- The selection summary names the acting pet, chosen action, damage or card effect, and target before confirmation.
+- After confirmation, input pauses briefly while the attack name, result, and damage are presented; the board remains visible.
+- Players can press `F` to flip open a larger detail panel for the targeted opponent, including health, tags, attacks, ability, and that opponent's specialty card. Within the panel, `A` shows the acting pet and `T` returns to the target pet.
+- During Bot and Local matches, `Escape` opens a confirmation screen. Players may resume, abandon the match and return to the main menu, or exit Battlepets. Leaving an offline match does not save it.
+- The battle control bar shows `H: All Controls`. Pressing `H` opens a complete control reference without advancing the match; `H` or `Escape` closes it.
+
 ## Modes and progression
 
 - Tutorial: choose a starter and learn against an Easy bot.
@@ -50,6 +64,12 @@ Effects resolve in this order:
 - Competitive: players select unique owned pets; missing slots are filled randomly.
 
 Guests may use Bot and Local with temporary names. Registered profiles retain mode-separated history. A qualifying online match that began with at least two registered human players awards the winner 10 Battle Coins.
+
+Before a Local match begins, the roster screen asks for each participant's display name. Every seat can independently be changed between Human and Bot. Pass-and-play handoff screens appear only before a human participant's turn.
+
+Bots first target opponents who have not yet received a hostile action. If several opponents are untouched, the bot chooses the one with the greatest combined remaining health across all of its pets. After every opponent has been attacked, the selected difficulty's normal targeting behavior applies. A blocked attack and an offensive damage or stun specialty card count as an attack for this rule.
+
+Bot matches offer Relaxed, Normal, and Quick turn-presentation speeds. This setting changes the pause before a bot acts and the time its attack/result presentation remains visible; it does not alter AI difficulty or battle rules. Relaxed is the default.
 
 ## Collection and shop
 

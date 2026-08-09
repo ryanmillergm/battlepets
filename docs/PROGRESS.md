@@ -22,6 +22,7 @@
 - [x] Implement Main Menu, setup, tutorial shortcut, Bot, and Local flows for the vertical slice.
 - [x] Implement Easy, Normal, and Hard AI.
 - [x] Run automated construction checks for 2–8 players and team sizes 2, 3, and 4.
+- [x] Add visible attack values, specialty-card descriptions, selection summaries, card details, and staged damage presentation.
 - [-] Complete hands-on gameplay and usability testing for every setup combination.
 
 ## M2 — Backend and admin foundation

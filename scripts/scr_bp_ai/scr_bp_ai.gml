@@ -30,12 +30,31 @@ function bp_ai_choose_action(_match, _player_index) {
         }
     }
 
+    // Give untouched opponents attention before returning to difficulty-specific
+    // targeting. Among untouched opponents, prefer the team with the most total HP.
+    var _priority_player = -1;
+    var _priority_health = -1;
+    for (var _priority_index = 0; _priority_index < array_length(_match.players); _priority_index++) {
+        if (_priority_index == _player_index) continue;
+        var _priority_opponent = _match.players[_priority_index];
+        if (_priority_opponent.eliminated || _priority_opponent.has_been_attacked) continue;
+        var _team_health = 0;
+        for (var _priority_slot = 0; _priority_slot < array_length(_priority_opponent.pets); _priority_slot++) {
+            _team_health += max(0, _priority_opponent.pets[_priority_slot].health);
+        }
+        if (_team_health > _priority_health) {
+            _priority_health = _team_health;
+            _priority_player = _priority_index;
+        }
+    }
+
     var _target_player = -1;
     var _target_slot = -1;
     var _best_health = 1000000;
     var _candidates = [];
     for (var _p = 0; _p < array_length(_match.players); _p++) {
         if (_p == _player_index) continue;
+        if (_priority_player >= 0 && _p != _priority_player) continue;
         for (var _s = 0; _s < array_length(_match.players[_p].pets); _s++) {
             var _target = _match.players[_p].pets[_s];
             if (!bp_pet_alive(_target)) continue;

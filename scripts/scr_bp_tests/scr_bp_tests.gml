@@ -39,6 +39,23 @@ function bp_run_self_tests(_catalog) {
     var _acted = bp_apply_action(_match, _current, _actor, "basic", _target_player, _target_slot);
     _passed = bp_test_check(_acted && _match.action_number == 1, "legal basic attack") && _passed;
     _passed = bp_test_check(_match.players[_target_player].pets[_target_slot].health < _before, "basic attack damage") && _passed;
+    _passed = bp_test_check(_match.players[_target_player].has_been_attacked, "hostile action marks target player attacked") && _passed;
+
+    var _ai_match = bp_match_create(_catalog, ["Bot", "Low", "High", "Already"], [true, false, false, false], 2, 0);
+    var _ai_player = bp_current_player_index(_ai_match);
+    _ai_match.players[_ai_player].is_bot = true;
+    for (var _ap = 0; _ap < array_length(_ai_match.players); _ap++) {
+        if (_ap == _ai_player) continue;
+        _ai_match.players[_ap].has_been_attacked = true;
+    }
+    var _low_player = (_ai_player + 1) mod 4;
+    var _high_player = (_ai_player + 2) mod 4;
+    _ai_match.players[_low_player].has_been_attacked = false;
+    _ai_match.players[_high_player].has_been_attacked = false;
+    for (var _ls = 0; _ls < 2; _ls++) _ai_match.players[_low_player].pets[_ls].health = 10;
+    for (var _hs = 0; _hs < 2; _hs++) _ai_match.players[_high_player].pets[_hs].health = 70;
+    var _ai_choice = bp_ai_choose_action(_ai_match, _ai_player);
+    _passed = bp_test_check(_ai_choice.target_player == _high_player, "bot prioritizes highest-health untouched player") && _passed;
 
     show_debug_message(_passed ? "BATTLEPETS SELF-TESTS PASSED" : "BATTLEPETS SELF-TESTS FAILED");
     return _passed;

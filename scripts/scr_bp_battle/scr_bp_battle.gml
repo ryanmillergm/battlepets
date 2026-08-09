@@ -40,6 +40,7 @@ function bp_match_create(_catalog, _names, _bots, _team_size, _difficulty) {
             pets: _team,
             card: _catalog.cards[irandom(array_length(_catalog.cards) - 1)],
             card_used: false,
+            has_been_attacked: false,
             eliminated: false
         });
     }
@@ -138,6 +139,11 @@ function bp_apply_action(_match, _player_index, _actor_slot, _action, _target_pl
     var _target_owner = _match.players[_target_player];
     var _target = _target_owner.pets[_target_slot];
     var _message = "";
+
+    // A hostile attack attempt counts even when a shield prevents damage.
+    if (_target_player != _player_index && (_action != "card" || _player.card.effect == "damage" || _player.card.effect == "stun")) {
+        _target_owner.has_been_attacked = true;
+    }
 
     if (_action == "card") {
         var _card = _player.card;
