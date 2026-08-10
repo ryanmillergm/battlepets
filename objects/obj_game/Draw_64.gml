@@ -25,57 +25,100 @@ if (screen == "pause") {
 }
 
 if (screen == "main") {
-    draw_set_color(make_color_rgb(255, 210, 70));
+    draw_clear(c_white);
+    draw_set_color(make_color_rgb(212, 160, 20));
     draw_text_transformed(_gw * 0.5, 210, "BATTLEPETS", 3, 3, 0);
-    draw_set_color(c_white);
+    draw_set_color(make_color_rgb(13, 20, 38));
     draw_text_transformed(_gw * 0.5, 390, "ENTER / P  -  PLAY", 1.5, 1.5, 0);
-    draw_text_transformed(_gw * 0.5, 450, "T  -  TUTORIAL", 1.5, 1.5, 0);
-    draw_set_color(make_color_rgb(150, 170, 205));
-    draw_text(_gw * 0.5, 560, "Turn-based free-for-all battles for 2-8 players");
+    draw_text_transformed(_gw * 0.5, 460, "T  -  TUTORIAL", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(75, 88, 112));
+    draw_text(_gw * 0.5, 600, "Turn-based free-for-all battles for 2-8 players");
+    exit;
+}
+
+if (screen == "shop") {
+    draw_clear(c_white);
+    draw_set_color(make_color_rgb(212, 160, 20));
+    draw_text_transformed(_gw * 0.5, 135, "BATTLEPETS SHOP", 2.25, 2.25, 0);
+    draw_set_color(make_color_rgb(75, 88, 112));
+    draw_text(_gw * 0.5, 195, "Build your collection with Battle Coins");
+
+    var _shop_width = 340;
+    var _shop_gap = 35;
+    var _shop_start = _gw * 0.5 - (_shop_width * 1.5 + _shop_gap);
+    var _shop_names = ["BATTLEPETS", "PET PACKS", "BATTLE COINS"];
+    var _shop_descriptions = ["Purchase a specific published pet.", "Open a pack containing exactly two pets.", "Parent-only purchases after release approval."];
+    var _shop_colors = [make_color_rgb(75, 175, 255), make_color_rgb(150, 90, 190), make_color_rgb(212, 160, 20)];
+    for (var _shop_index = 0; _shop_index < 3; _shop_index++) {
+        var _shop_x = _shop_start + _shop_index * (_shop_width + _shop_gap);
+        draw_set_color(make_color_rgb(238, 242, 248));
+        draw_roundrect(_shop_x, 285, _shop_x + _shop_width, 555, false);
+        draw_set_color(_shop_colors[_shop_index]);
+        draw_rectangle(_shop_x, 285, _shop_x + _shop_width, 300, false);
+        draw_text_transformed(_shop_x + _shop_width * 0.5, 355, _shop_names[_shop_index], 1.45, 1.45, 0);
+        draw_set_color(make_color_rgb(38, 50, 72));
+        draw_text_ext(_shop_x + _shop_width * 0.5, 430, _shop_descriptions[_shop_index], 20, _shop_width - 45);
+        draw_set_color(make_color_rgb(95, 108, 132));
+        draw_text(_shop_x + _shop_width * 0.5, 510, "COMING IN M4");
+    }
+
+    draw_set_color(make_color_rgb(13, 20, 38));
+    draw_text(_gw * 0.5, 675, "Exact rarity and pet odds will be shown before every pack purchase.");
+    draw_set_color(make_color_rgb(75, 88, 112));
+    draw_text(_gw * 0.5, 760, "ESC - Back to Play Menu");
     exit;
 }
 
 if (screen == "mode") {
+    draw_clear(c_white);
     draw_set_color(make_color_rgb(255, 210, 70));
-    draw_text_transformed(_gw * 0.5, 170, "CHOOSE PLAY MODE", 2, 2, 0);
-    draw_set_color(c_white);
-    draw_text_transformed(_gw * 0.5, 340, "B  -  BOTS", 1.5, 1.5, 0);
-    draw_text_transformed(_gw * 0.5, 420, "L  -  LOCAL (TAKE TURNS)", 1.5, 1.5, 0);
-    draw_set_color(make_color_rgb(130, 145, 175));
-    draw_text_transformed(_gw * 0.5, 500, "ONLINE  -  COMING IN M3", 1.25, 1.25, 0);
-    draw_text(_gw * 0.5, 650, "ESC - Back");
+    draw_text_transformed(_gw * 0.32, 170, "CHOOSE PLAY MODE", 2, 2, 0);
+    draw_set_color(make_color_rgb(75, 175, 255));
+    draw_text_transformed(_gw * 0.32, 330, "B  -  BOTS", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(110, 235, 155));
+    draw_text_transformed(_gw * 0.32, 420, "L  -  LOCAL (TAKE TURNS)", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(0, 165, 175));
+    draw_text_transformed(_gw * 0.75, 170, "S  -  SHOP", 2, 2, 0);
+    draw_set_color(make_color_rgb(55, 115, 120));
+    draw_text_transformed(_gw * 0.75, 235, "Packs, Specialties, Pets", 1.1, 1.1, 0);
+    draw_set_color(make_color_rgb(95, 108, 132));
+    draw_text_transformed(_gw * 0.32, 510, "ONLINE  -  COMING IN M3", 1.25, 1.25, 0);
+    draw_set_color(make_color_rgb(13, 20, 38));
+    draw_text(_gw * 0.32, 650, "ESC - Back");
     exit;
 }
 
 if (screen == "setup") {
     var _difficulty_names = ["Easy", "Normal", "Hard"];
     var _bot_speed_names = ["Relaxed", "Normal", "Quick"];
-    draw_set_color(make_color_rgb(255, 210, 70));
+    if (play_mode == "local") draw_clear(c_white);
+    draw_set_color(play_mode == "bot" ? make_color_rgb(75, 175, 255) : make_color_rgb(255, 210, 70));
     draw_text_transformed(_gw * 0.5, 150, string_upper(play_mode) + " BATTLE SETUP", 2, 2, 0);
 
-    draw_set_color(make_color_rgb(150, 170, 205));
+    draw_set_color(play_mode == "local" ? make_color_rgb(75, 88, 112) : make_color_rgb(150, 170, 205));
     draw_text_transformed(_gw * 0.5, 265, "CHOOSE NUMBER OF PLAYERS", 1.1, 1.1, 0);
-    draw_set_color(c_white);
+    draw_set_color(play_mode == "local" ? make_color_rgb(13, 20, 38) : c_white);
     draw_text_transformed(_gw * 0.5, 315, "Players: " + string(setup_players) + "   (UP / DOWN)", 1.5, 1.5, 0);
 
-    draw_set_color(make_color_rgb(150, 170, 205));
+    draw_set_color(play_mode == "local" ? make_color_rgb(75, 88, 112) : make_color_rgb(150, 170, 205));
     draw_text_transformed(_gw * 0.5, 395, "CHOOSE NUMBER OF PETS", 1.1, 1.1, 0);
-    draw_set_color(c_white);
+    draw_set_color(play_mode == "local" ? make_color_rgb(13, 20, 38) : c_white);
     draw_text_transformed(_gw * 0.5, 445, "Pets each: " + string(setup_team_size) + "   (LEFT / RIGHT)", 1.5, 1.5, 0);
 
     if (play_mode == "bot") {
         draw_text_transformed(_gw * 0.5, 525, "Bot level: " + _difficulty_names[setup_difficulty] + "   (D)", 1.5, 1.5, 0);
         draw_text_transformed(_gw * 0.5, 585, "Bot turn speed: " + _bot_speed_names[setup_bot_speed] + "   (S)", 1.5, 1.5, 0);
     }
-    draw_set_color(make_color_rgb(110, 235, 155));
+    draw_set_color(play_mode == "local" ? make_color_rgb(25, 155, 85) : make_color_rgb(110, 235, 155));
     draw_text_transformed(_gw * 0.5, play_mode == "bot" ? 690 : 650, "ENTER - START", 1.5, 1.5, 0);
     exit;
 }
 
 if (screen == "local_roster") {
+    draw_clear(c_white);
     draw_set_color(make_color_rgb(255, 210, 70));
     draw_text_transformed(_gw * 0.5, 105, "LOCAL PLAYER ROSTER", 2, 2, 0);
-    draw_set_color(make_color_rgb(150, 170, 205));
+    draw_set_color(make_color_rgb(75, 88, 112));
     draw_text(_gw * 0.5, 155, "Name every participant and optionally turn any seat into a bot");
 
     var _roster_columns = setup_players > 4 ? 2 : 1;
@@ -102,11 +145,11 @@ if (screen == "local_roster") {
     }
 
     draw_set_halign(fa_center);
-    draw_set_color(c_white);
+    draw_set_color(make_color_rgb(13, 20, 38));
     draw_text(_gw * 0.5, 705, roster_editing ? "TYPE A NAME    ENTER - SAVE    ESC - CANCEL EDIT" : "UP/DOWN - SELECT    ENTER - EDIT NAME    B - HUMAN/BOT");
-    draw_set_color(make_color_rgb(110, 235, 155));
+    draw_set_color(make_color_rgb(25, 155, 85));
     if (!roster_editing) draw_text_transformed(_gw * 0.5, 765, "S - START MATCH", 1.5, 1.5, 0);
-    draw_set_color(make_color_rgb(150, 170, 205));
+    draw_set_color(make_color_rgb(75, 88, 112));
     draw_text(_gw * 0.5, 825, "ESC - Back to Main Menu");
     exit;
 }
@@ -168,11 +211,12 @@ if (screen == "battle") {
     var _current_index = bp_current_player_index(match);
     var _team_size = array_length(match.players[0].pets);
     var _showing_fx = combat_fx_timer > 0;
+    if (play_mode == "local") draw_clear(c_white);
     draw_set_halign(fa_left);
     draw_set_valign(fa_top);
     draw_set_color(make_color_rgb(255, 210, 70));
     draw_text_transformed(30, 18, "Round " + string(match.round) + "  |  " + match.players[_current_index].name + "'s turn", 1.35, 1.35, 0);
-    draw_set_color(c_white);
+    draw_set_color(play_mode == "local" ? make_color_rgb(13, 20, 38) : c_white);
     draw_text(30, 54, match.last_message);
 
     for (var _p = 0; _p < array_length(match.players); _p++) {
@@ -263,7 +307,7 @@ if (screen == "battle") {
         }
     }
 
-    draw_set_color(make_color_rgb(18, 28, 50));
+    draw_set_color(c_black);
     draw_rectangle(0, 790, _gw, _gh, false);
     draw_set_color(c_white);
     draw_text(25, 806, "Q/E: choose pet    LEFT/RIGHT: target    1: Basic    2: Super    3: Specialty    F: Details    ENTER: act    ESC: Pause / Exit    H: All Controls");

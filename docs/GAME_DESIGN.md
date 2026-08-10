@@ -73,6 +73,7 @@ Bot matches offer Relaxed, Normal, and Quick turn-presentation speeds. This sett
 
 ## Collection and shop
 
+- The Play submenu opens the Shop with `S`. Until M4 services are implemented, it previews Battlepets, two-pet packs, and Battle Coin sections without enabling purchases.
 - New profiles choose one admin-designated starter.
 - Packs contain two random pets and publish exact rarity and per-pet odds.
 - Direct pet purchases and packs use Battle Coins.

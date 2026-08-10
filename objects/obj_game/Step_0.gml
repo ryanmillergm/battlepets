@@ -30,7 +30,13 @@ if (keyboard_check_pressed(vk_escape)) {
         screen = "pause";
         exit;
     }
-    if (screen == "main") game_end(); else screen = "main";
+    if (screen == "main") {
+        game_end();
+    } else if (screen == "shop") {
+        screen = "mode";
+    } else {
+        screen = "main";
+    }
 }
 
 switch (screen) {
@@ -47,7 +53,12 @@ switch (screen) {
         }
         break;
 
+    case "shop":
+        // Shop browsing and purchases activate with the M4 collection/economy APIs.
+        break;
+
     case "mode":
+        if (keyboard_check_pressed(ord("S"))) screen = "shop";
         if (keyboard_check_pressed(ord("B"))) {
             tutorial = false;
             play_mode = "bot";
