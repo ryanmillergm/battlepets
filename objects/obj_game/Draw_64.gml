@@ -29,7 +29,7 @@ if (screen == "main") {
     draw_set_color(make_color_rgb(212, 160, 20));
     draw_text_transformed(_gw * 0.5, 210, "BATTLEPETS", 3, 3, 0);
     draw_set_color(make_color_rgb(13, 20, 38));
-    draw_text_transformed(_gw * 0.5, 390, "ENTER / P  -  PLAY", 1.5, 1.5, 0);
+    draw_text_transformed(_gw * 0.5, 390, "ENTER / SPACE  -  PLAY", 1.5, 1.5, 0);
     draw_text_transformed(_gw * 0.5, 460, "T  -  TUTORIAL", 1.5, 1.5, 0);
     draw_set_color(make_color_rgb(75, 88, 112));
     draw_text(_gw * 0.5, 600, "Turn-based free-for-all battles for 2-8 players");
@@ -38,6 +38,10 @@ if (screen == "main") {
 
 if (screen == "shop") {
     draw_clear(c_white);
+    draw_set_halign(fa_right);
+    draw_set_color(make_color_rgb(212, 160, 20));
+    draw_text_transformed(_gw - 35, 35, "BATTLE COINS: " + string(battle_coins), 1.25, 1.25, 0);
+    draw_set_halign(fa_center);
     draw_set_color(make_color_rgb(212, 160, 20));
     draw_text_transformed(_gw * 0.5, 135, "BATTLEPETS SHOP", 2.25, 2.25, 0);
     draw_set_color(make_color_rgb(75, 88, 112));
@@ -71,6 +75,10 @@ if (screen == "shop") {
 
 if (screen == "mode") {
     draw_clear(c_white);
+    draw_set_halign(fa_right);
+    draw_set_color(make_color_rgb(212, 160, 20));
+    draw_text_transformed(_gw - 35, 35, "BATTLE COINS: " + string(battle_coins), 1.25, 1.25, 0);
+    draw_set_halign(fa_center);
     draw_set_color(make_color_rgb(255, 210, 70));
     draw_text_transformed(_gw * 0.32, 170, "CHOOSE PLAY MODE", 2, 2, 0);
     draw_set_color(make_color_rgb(75, 175, 255));
@@ -109,8 +117,106 @@ if (screen == "setup") {
         draw_text_transformed(_gw * 0.5, 525, "Bot level: " + _difficulty_names[setup_difficulty] + "   (D)", 1.5, 1.5, 0);
         draw_text_transformed(_gw * 0.5, 585, "Bot turn speed: " + _bot_speed_names[setup_bot_speed] + "   (S)", 1.5, 1.5, 0);
     }
+    if (play_mode == "bot") {
+        draw_set_color(make_color_rgb(25, 155, 85));
+        draw_text_transformed(_gw * 0.5, 640, "C - CHOOSE BATTLEPETS", 1.25, 1.25, 0);
+    }
     draw_set_color(play_mode == "local" ? make_color_rgb(25, 155, 85) : make_color_rgb(110, 235, 155));
-    draw_text_transformed(_gw * 0.5, play_mode == "bot" ? 690 : 650, "ENTER - START", 1.5, 1.5, 0);
+    draw_text_transformed(_gw * 0.5, play_mode == "bot" ? 715 : 650, "ENTER - START", 1.5, 1.5, 0);
+    exit;
+}
+
+if (screen == "collection") {
+    draw_clear(c_white);
+    draw_set_color(make_color_rgb(0, 145, 155));
+    draw_text_transformed(_gw * 0.5, 55, "BATTLEPET COLLECTION", 2, 2, 0);
+    draw_set_color(make_color_rgb(75, 88, 112));
+    var _collection_owner = collection_context_seat >= 0 ? local_player_names[collection_context_seat] : "Player 1";
+    draw_text(_gw * 0.5, 105, _collection_owner + " - Choose " + string(setup_team_size) + " pets for battle   (" + string(array_length(collection_selected_ids)) + "/" + string(setup_team_size) + " selected)");
+
+    var _collection_card_width = 350;
+    var _collection_card_height = 190;
+    var _collection_gap_x = 25;
+    var _collection_gap_y = 18;
+    var _collection_start_x = (_gw - (4 * _collection_card_width + 3 * _collection_gap_x)) * 0.5;
+    for (var _collection_slot = 0; _collection_slot < collection_slot_count; _collection_slot++) {
+        var _collection_x = _collection_start_x + (_collection_slot mod 4) * (_collection_card_width + _collection_gap_x);
+        var _collection_y = 145 + (_collection_slot div 4) * (_collection_card_height + _collection_gap_y);
+        var _collection_owned = _collection_slot < array_length(owned_pet_ids);
+        var _collection_focused = _collection_slot == collection_cursor;
+        var _collection_selected_number = 0;
+        if (_collection_owned) {
+            for (var _collection_pick = 0; _collection_pick < array_length(collection_selected_ids); _collection_pick++) {
+                if (collection_selected_ids[_collection_pick] == owned_pet_ids[_collection_slot]) _collection_selected_number = _collection_pick + 1;
+            }
+        }
+
+        draw_set_color(_collection_owned ? make_color_rgb(238, 242, 248) : make_color_rgb(225, 229, 235));
+        draw_roundrect(_collection_x, _collection_y, _collection_x + _collection_card_width, _collection_y + _collection_card_height, false);
+        var _focus_flash = 45 + floor(35 * (0.5 + 0.5 * sin(current_time * 0.012)));
+        draw_set_color(_collection_focused ? make_color_rgb(255, _focus_flash, _focus_flash) : (_collection_selected_number > 0 ? make_color_rgb(25, 155, 85) : make_color_rgb(160, 170, 188)));
+        draw_rectangle(_collection_x, _collection_y, _collection_x + _collection_card_width, _collection_y + _collection_card_height, true);
+        if (_collection_focused) {
+            draw_set_color(make_color_rgb(255, 35, 45));
+            draw_rectangle(_collection_x + 3, _collection_y + 3, _collection_x + _collection_card_width - 3, _collection_y + _collection_card_height - 3, true);
+        }
+
+        if (_collection_owned) {
+            var _collection_pet = catalog_pet_by_id(owned_pet_ids[_collection_slot]);
+            var _collection_name = string_replace(_collection_pet.name, " (Placeholder)", "");
+            var _art_left = _collection_x + 15;
+            var _art_top = _collection_y + 35;
+            var _art_width = 105;
+            var _art_height = 115;
+            draw_set_color(make_color_rgb(218, 226, 238));
+            draw_roundrect(_art_left, _art_top, _art_left + _art_width, _art_top + _art_height, false);
+            if (_collection_pet.sprite != -1) {
+                var _bbox_left = sprite_get_bbox_left(_collection_pet.sprite);
+                var _bbox_right = sprite_get_bbox_right(_collection_pet.sprite);
+                var _bbox_top = sprite_get_bbox_top(_collection_pet.sprite);
+                var _bbox_bottom = sprite_get_bbox_bottom(_collection_pet.sprite);
+                var _visible_width = max(1, _bbox_right - _bbox_left + 1);
+                var _visible_height = max(1, _bbox_bottom - _bbox_top + 1);
+                var _art_scale = min((_art_width - 10) / _visible_width, (_art_height - 10) / _visible_height);
+                var _art_center_x = _art_left + _art_width * 0.5;
+                var _art_center_y = _art_top + _art_height * 0.5;
+                var _draw_x = _art_center_x - (_bbox_left + _bbox_right) * 0.5 * _art_scale;
+                var _draw_y = _art_center_y - (_bbox_top + _bbox_bottom) * 0.5 * _art_scale;
+                draw_sprite_ext(_collection_pet.sprite, 0, _draw_x, _draw_y, _art_scale, _art_scale, 0, c_white, 1);
+            } else {
+                draw_set_halign(fa_center);
+                draw_set_color(make_color_rgb(125, 142, 170));
+                draw_text_transformed(_art_left + _art_width * 0.5, _art_top + 44, "?", 2.2, 2.2, 0);
+                draw_text_transformed(_art_left + _art_width * 0.5, _art_top + 88, "ART COMING SOON", 0.55, 0.55, 0);
+            }
+            draw_set_halign(fa_left);
+            draw_set_color(make_color_rgb(13, 20, 38));
+            draw_text_transformed(_collection_x + 130, _collection_y + 22, _collection_name, 1.15, 1.15, 0);
+            draw_set_color(make_color_rgb(75, 88, 112));
+            draw_text(_collection_x + 130, _collection_y + 60, "HEALTH  " + string(_collection_pet.max_health));
+            draw_text(_collection_x + 130, _collection_y + 88, "BASIC   " + _collection_pet.basic.name + "  " + string(_collection_pet.basic.damage));
+            draw_text(_collection_x + 130, _collection_y + 116, "SUPER   " + _collection_pet.super.name + "  " + string(_collection_pet.super.damage));
+            draw_text(_collection_x + 130, _collection_y + 144, "TAGS    " + string(_collection_pet.tags));
+            if (_collection_selected_number > 0) {
+                draw_set_halign(fa_center);
+                draw_set_color(make_color_rgb(25, 155, 85));
+                draw_text_transformed(_collection_x + 45, _collection_y + 158, "TEAM " + string(_collection_selected_number), 0.9, 0.9, 0);
+            }
+        } else {
+            draw_set_halign(fa_center);
+            draw_set_color(make_color_rgb(145, 155, 172));
+            draw_text_transformed(_collection_x + _collection_card_width * 0.5, _collection_y + 82, "EMPTY PET SLOT", 1.1, 1.1, 0);
+            draw_text(_collection_x + _collection_card_width * 0.5, _collection_y + 125, "Find or purchase another Battlepet");
+        }
+    }
+
+    draw_set_halign(fa_center);
+    draw_set_color(make_color_rgb(13, 20, 38));
+    draw_text(_gw * 0.5, 790, "ARROWS - MOVE    SPACE - ADD / REMOVE PET    ENTER - CONFIRM TEAM");
+    draw_set_color(array_length(collection_selected_ids) == setup_team_size ? make_color_rgb(25, 155, 85) : make_color_rgb(190, 80, 65));
+    draw_text(_gw * 0.5, 835, array_length(collection_selected_ids) == setup_team_size ? "TEAM READY" : "SELECT EXACTLY " + string(setup_team_size) + " PETS");
+    draw_set_color(make_color_rgb(75, 88, 112));
+    draw_text(_gw * 0.5, 870, "ESC - Cancel and return");
     exit;
 }
 
@@ -146,11 +252,15 @@ if (screen == "local_roster") {
 
     draw_set_halign(fa_center);
     draw_set_color(make_color_rgb(13, 20, 38));
-    draw_text(_gw * 0.5, 705, roster_editing ? "TYPE A NAME    ENTER - SAVE    ESC - CANCEL EDIT" : "UP/DOWN - SELECT    ENTER - EDIT NAME    B - HUMAN/BOT");
+    draw_text(_gw * 0.5, 690, roster_editing ? "TYPE A NAME    ENTER - SAVE    ESC - CANCEL EDIT" : "UP/DOWN - SELECT    ENTER - EDIT NAME    B - HUMAN/BOT");
+    if (!roster_editing) {
+        draw_set_color(make_color_rgb(25, 155, 85));
+        draw_text_transformed(_gw * 0.5, 730, "C - CHOOSE PETS", 1.15, 1.15, 0);
+    }
     draw_set_color(make_color_rgb(25, 155, 85));
-    if (!roster_editing) draw_text_transformed(_gw * 0.5, 765, "S - START MATCH", 1.5, 1.5, 0);
+    if (!roster_editing) draw_text_transformed(_gw * 0.5, 785, "S - START MATCH", 1.5, 1.5, 0);
     draw_set_color(make_color_rgb(75, 88, 112));
-    draw_text(_gw * 0.5, 825, "ESC - Back to Main Menu");
+    draw_text(_gw * 0.5, 845, "ESC - Back to Main Menu");
     exit;
 }
 
@@ -204,6 +314,12 @@ if (screen == "result") {
     draw_text_transformed(_gw * 0.5, 300, match.last_message, 2, 2, 0);
     draw_set_color(c_white);
     draw_text_transformed(_gw * 0.5, 480, "ENTER - MAIN MENU", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(255, 210, 70));
+    draw_text_transformed(_gw * 0.5, 570, "BATTLE COINS: " + string(battle_coins), 1.35, 1.35, 0);
+    if (last_coin_reward > 0) {
+        draw_set_color(make_color_rgb(110, 235, 155));
+        draw_text_transformed(_gw * 0.5, 630, "REWARD EARNED: +" + string(last_coin_reward), 1.25, 1.25, 0);
+    }
     exit;
 }
 

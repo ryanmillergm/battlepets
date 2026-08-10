@@ -23,6 +23,8 @@
 - [x] Implement Easy, Normal, and Hard AI.
 - [x] Run automated construction checks for 2–8 players and team sizes 2, 3, and 4.
 - [x] Add visible attack values, specialty-card descriptions, selection summaries, card details, and staged damage presentation.
+- [x] Add a locally persisted development Battle Coin balance and 2-coin Bot-win rewards; retain server-authoritative online rewards as planned work.
+- [x] Add the development Collection grid and per-seat Bot/Local team selection using the owned eight-pet roster.
 - [-] Complete hands-on gameplay and usability testing for every setup combination.
 
 ## M2 — Backend and admin foundation

@@ -65,6 +65,8 @@ Effects resolve in this order:
 
 Guests may use Bot and Local with temporary names. Registered profiles retain mode-separated history. A qualifying online match that began with at least two registered human players awards the winner 10 Battle Coins.
 
+The human player earns 2 Battle Coins for winning a Bot match. The offline development balance is saved locally and displayed in the Play and Shop submenus. Online wins award 10 Battle Coins only under the qualifying registered-human rule and will use the authoritative server ledger when online play is implemented. Local matches do not award coins.
+
 Before a Local match begins, the roster screen asks for each participant's display name. Every seat can independently be changed between Human and Bot. Pass-and-play handoff screens appear only before a human participant's turn.
 
 Bots first target opponents who have not yet received a hostile action. If several opponents are untouched, the bot chooses the one with the greatest combined remaining health across all of its pets. After every opponent has been attacked, the selected difficulty's normal targeting behavior applies. A blocked attack and an offensive damage or stun specialty card count as an attack for this rule.
@@ -74,6 +76,7 @@ Bot matches offer Relaxed, Normal, and Quick turn-presentation speeds. This sett
 ## Collection and shop
 
 - The Play submenu opens the Shop with `S`. Until M4 services are implemented, it previews Battlepets, two-pet packs, and Battle Coin sections without enabling purchases.
+- Bot setup opens Collection with `C`; Local opens it with `C` on each selected roster seat. The collection shows owned pets in stat cards plus empty future slots. Players select exactly the configured team size with no duplicate definitions. Bot mode applies the lineup to Player 1; Local mode stores a separate lineup for every configured seat. The same screen is intended for the registered profile in Online mode.
 - New profiles choose one admin-designated starter.
 - Packs contain two random pets and publish exact rarity and per-pet odds.
 - Direct pet purchases and packs use Battle Coins.

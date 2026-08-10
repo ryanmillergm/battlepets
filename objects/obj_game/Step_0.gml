@@ -34,6 +34,8 @@ if (keyboard_check_pressed(vk_escape)) {
         game_end();
     } else if (screen == "shop") {
         screen = "mode";
+    } else if (screen == "collection") {
+        screen = collection_return_screen;
     } else {
         screen = "main";
     }
@@ -41,7 +43,7 @@ if (keyboard_check_pressed(vk_escape)) {
 
 switch (screen) {
     case "main":
-        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(ord("P"))) screen = "mode";
+        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space)) screen = "mode";
         if (keyboard_check_pressed(ord("T"))) {
             tutorial = true;
             play_mode = "bot";
@@ -92,12 +94,41 @@ switch (screen) {
         if (keyboard_check_pressed(vk_up)) roster_selected = max(0, roster_selected - 1);
         if (keyboard_check_pressed(vk_down)) roster_selected = min(setup_players - 1, roster_selected + 1);
         if (keyboard_check_pressed(ord("B"))) local_player_bots[roster_selected] = !local_player_bots[roster_selected];
+        if (keyboard_check_pressed(ord("C"))) open_collection("local_roster", roster_selected);
         if (keyboard_check_pressed(vk_enter)) {
             roster_editing = true;
             roster_original_name = local_player_names[roster_selected];
             keyboard_string = local_player_names[roster_selected];
         }
         if (keyboard_check_pressed(ord("S"))) start_match();
+        break;
+
+    case "collection":
+        var _collection_col = collection_cursor mod 4;
+        var _collection_row = collection_cursor div 4;
+        if (keyboard_check_pressed(vk_left)) _collection_col = max(0, _collection_col - 1);
+        if (keyboard_check_pressed(vk_right)) _collection_col = min(3, _collection_col + 1);
+        if (keyboard_check_pressed(vk_up)) _collection_row = max(0, _collection_row - 1);
+        if (keyboard_check_pressed(vk_down)) _collection_row = min(2, _collection_row + 1);
+        collection_cursor = _collection_row * 4 + _collection_col;
+
+        if (keyboard_check_pressed(vk_space) && collection_cursor < array_length(owned_pet_ids)) {
+            var _collection_id = owned_pet_ids[collection_cursor];
+            var _selected_position = -1;
+            for (var _selected_search = 0; _selected_search < array_length(collection_selected_ids); _selected_search++) {
+                if (collection_selected_ids[_selected_search] == _collection_id) _selected_position = _selected_search;
+            }
+            if (_selected_position >= 0) {
+                array_delete(collection_selected_ids, _selected_position, 1);
+            } else if (array_length(collection_selected_ids) < setup_team_size) {
+                array_push(collection_selected_ids, _collection_id);
+            }
+        }
+
+        if (keyboard_check_pressed(vk_enter) && array_length(collection_selected_ids) == setup_team_size) {
+            if (collection_context_seat >= 0) local_player_lineups[collection_context_seat] = copy_lineup(collection_selected_ids); else bot_lineup_ids = copy_lineup(collection_selected_ids);
+            screen = collection_return_screen;
+        }
         break;
 
     case "setup":
@@ -107,6 +138,7 @@ switch (screen) {
         if (keyboard_check_pressed(vk_left)) setup_team_size = max(2, setup_team_size - 1);
         if (keyboard_check_pressed(ord("D"))) setup_difficulty = (setup_difficulty + 1) mod 3;
         if (play_mode == "bot" && keyboard_check_pressed(ord("S"))) setup_bot_speed = (setup_bot_speed + 1) mod 3;
+        if (play_mode == "bot" && keyboard_check_pressed(ord("C"))) open_collection("setup", -1);
         if (keyboard_check_pressed(vk_enter)) {
             if (play_mode == "local") {
                 prepare_local_roster();
@@ -129,6 +161,7 @@ switch (screen) {
             combat_fx_timer -= 1;
             if (combat_fx_timer <= 0) {
                 if (match.phase == "complete") {
+                    award_match_coins();
                     screen = "result";
                 } else if (play_mode == "local" && !match.players[bp_current_player_index(match)].is_bot) {
                     screen = "handoff";
@@ -140,6 +173,7 @@ switch (screen) {
         }
 
         if (match.phase == "complete") {
+            award_match_coins();
             screen = "result";
             break;
         }

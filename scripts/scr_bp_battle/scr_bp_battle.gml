@@ -55,6 +55,7 @@ function bp_match_create(_catalog, _names, _bots, _team_size, _difficulty) {
         order_index: 0,
         round: 1,
         action_number: 0,
+        coins_awarded: false,
         phase: "active",
         winner: -1,
         log: [],
