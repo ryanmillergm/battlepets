@@ -26,10 +26,12 @@ The live offline catalog is defined in `scripts/scr_bp_catalog/scr_bp_catalog.gm
    - player-facing name;
    - positive maximum health;
    - basic attack name and positive fixed damage;
-   - super name and positive fixed damage;
+   - super name and positive base damage;
    - an array of normalized lowercase tags;
    - GameMaker sprite asset, or `-1` only for an explicitly labeled placeholder;
-   - whether the basic attack is unblockable.
+   - whether the basic attack is unblockable;
+   - optional super stun duration in rounds;
+   - optional `true` when the super's listed damage is multiplied by the targeted opponent's number of living pets.
 4. Increase the returned catalog `version` when making a compatibility-relevant catalog change.
 5. Open `battlepets.yyp`, run the Windows target, and confirm the log says `BATTLEPETS SELF-TESTS PASSED`.
 6. Play at least one Bot and one Local match using the new pet. Check its art, health, attacks, super-use limit, targeting, knockout behavior, and interaction with every relevant specialty card.
@@ -48,7 +50,9 @@ bp_pet_definition(
     34,
     ["dog", "fur", "air"],
     spr_cloud_pup,
-    true
+    true,
+    0,
+    false
 )
 ```
 

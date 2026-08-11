@@ -41,6 +41,15 @@ function bp_run_self_tests(_catalog) {
     _passed = bp_test_check(_match.players[_target_player].pets[_target_slot].health < _before, "basic attack damage") && _passed;
     _passed = bp_test_check(_match.players[_target_player].has_been_attacked, "hostile action marks target player attacked") && _passed;
 
+    var _multi_match = bp_match_create(_catalog, ["Axle Test", "Target Team"], [false, false], 4, 0);
+    _multi_match.order = [0, 1];
+    _multi_match.order_index = 0;
+    _multi_match.players[0].pets[0] = bp_pet_state_create(_catalog.pets[5]);
+    _multi_match.players[1].pets[0].health = 500;
+    _multi_match.players[1].pets[3].health = 0;
+    var _multi_acted = bp_apply_action(_multi_match, 0, 0, "super", 1, 0);
+    _passed = bp_test_check(_multi_acted && _multi_match.players[1].pets[0].health == 380, "Axle Multistrike deals 40 per living opposing pet") && _passed;
+
     var _ai_match = bp_match_create(_catalog, ["Bot", "Low", "High", "Already"], [true, false, false, false], 2, 0);
     var _ai_player = bp_current_player_index(_ai_match);
     _ai_match.players[_ai_player].is_bot = true;

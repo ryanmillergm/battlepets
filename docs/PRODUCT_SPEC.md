@@ -88,7 +88,7 @@ Guests can use Tutorial, Bot, and Local modes with temporary generic names. Pers
 
 ## Initial content
 
-Bailly and Porcha & Mercadies have recognizable existing art. Six labeled placeholder pets—Ember, Moss, Pebble, Ripple, Whisk, and Sprout—complete the eight-pet development roster. Placeholder names, balance, and art are not final production content. The visual target is polished pixel art.
+Bailly, Porcha & Mercadies, Jack, and Axle have recognizable existing art. Four labeled placeholder pets—Ember, Moss, Whisk, and Sprout—complete the eight-pet development roster. Placeholder names, balance, and art are not final production content. The visual target is polished pixel art.
 
 ## Open decisions
 

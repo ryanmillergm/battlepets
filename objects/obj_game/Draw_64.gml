@@ -6,6 +6,26 @@ draw_set_alpha(1);
 draw_set_halign(fa_center);
 draw_set_valign(fa_middle);
 
+var fit_text_scale = function(_text, _available_width, _maximum_scale) {
+    return min(_maximum_scale, _available_width / max(1, string_width(_text)));
+};
+
+var draw_pet_sprite_fit = function(_sprite, _left, _top, _width, _height, _alpha) {
+    if (_sprite == -1) return;
+    var _bbox_left = sprite_get_bbox_left(_sprite);
+    var _bbox_right = sprite_get_bbox_right(_sprite);
+    var _bbox_top = sprite_get_bbox_top(_sprite);
+    var _bbox_bottom = sprite_get_bbox_bottom(_sprite);
+    var _visible_width = max(1, _bbox_right - _bbox_left + 1);
+    var _visible_height = max(1, _bbox_bottom - _bbox_top + 1);
+    var _sprite_scale = min(_width / _visible_width, _height / _visible_height);
+    var _center_x = _left + _width * 0.5;
+    var _center_y = _top + _height * 0.5;
+    var _draw_x = _center_x - (_bbox_left + _bbox_right) * 0.5 * _sprite_scale;
+    var _draw_y = _center_y - (_bbox_top + _bbox_bottom) * 0.5 * _sprite_scale;
+    draw_sprite_ext(_sprite, 0, _draw_x, _draw_y, _sprite_scale, _sprite_scale, 0, c_white, _alpha);
+};
+
 if (screen == "pause") {
     draw_set_color(make_color_rgb(255, 210, 70));
     draw_text_transformed(_gw * 0.5, 225, "LEAVE THIS MATCH?", 2.25, 2.25, 0);
@@ -171,18 +191,7 @@ if (screen == "collection") {
             draw_set_color(make_color_rgb(218, 226, 238));
             draw_roundrect(_art_left, _art_top, _art_left + _art_width, _art_top + _art_height, false);
             if (_collection_pet.sprite != -1) {
-                var _bbox_left = sprite_get_bbox_left(_collection_pet.sprite);
-                var _bbox_right = sprite_get_bbox_right(_collection_pet.sprite);
-                var _bbox_top = sprite_get_bbox_top(_collection_pet.sprite);
-                var _bbox_bottom = sprite_get_bbox_bottom(_collection_pet.sprite);
-                var _visible_width = max(1, _bbox_right - _bbox_left + 1);
-                var _visible_height = max(1, _bbox_bottom - _bbox_top + 1);
-                var _art_scale = min((_art_width - 10) / _visible_width, (_art_height - 10) / _visible_height);
-                var _art_center_x = _art_left + _art_width * 0.5;
-                var _art_center_y = _art_top + _art_height * 0.5;
-                var _draw_x = _art_center_x - (_bbox_left + _bbox_right) * 0.5 * _art_scale;
-                var _draw_y = _art_center_y - (_bbox_top + _bbox_bottom) * 0.5 * _art_scale;
-                draw_sprite_ext(_collection_pet.sprite, 0, _draw_x, _draw_y, _art_scale, _art_scale, 0, c_white, 1);
+                draw_pet_sprite_fit(_collection_pet.sprite, _art_left + 5, _art_top + 5, _art_width - 10, _art_height - 10, 1);
             } else {
                 draw_set_halign(fa_center);
                 draw_set_color(make_color_rgb(125, 142, 170));
@@ -191,12 +200,23 @@ if (screen == "collection") {
             }
             draw_set_halign(fa_left);
             draw_set_color(make_color_rgb(13, 20, 38));
-            draw_text_transformed(_collection_x + 130, _collection_y + 22, _collection_name, 1.15, 1.15, 0);
+            var _collection_text_width = _collection_card_width - 145;
+            var _collection_name_scale = fit_text_scale(_collection_name, _collection_text_width, 1.15);
+            draw_text_transformed(_collection_x + 130, _collection_y + 22, _collection_name, _collection_name_scale, _collection_name_scale, 0);
             draw_set_color(make_color_rgb(75, 88, 112));
-            draw_text(_collection_x + 130, _collection_y + 60, "HEALTH  " + string(_collection_pet.max_health));
-            draw_text(_collection_x + 130, _collection_y + 88, "BASIC   " + _collection_pet.basic.name + "  " + string(_collection_pet.basic.damage));
-            draw_text(_collection_x + 130, _collection_y + 116, "SUPER   " + _collection_pet.super.name + "  " + string(_collection_pet.super.damage));
-            draw_text(_collection_x + 130, _collection_y + 144, "TAGS    " + string(_collection_pet.tags));
+            var _collection_health_text = "HEALTH  " + string(_collection_pet.max_health);
+            var _collection_basic_text = "BASIC   " + _collection_pet.basic.name + "  " + string(_collection_pet.basic.damage);
+            var _collection_super_damage = _collection_pet.super.per_target_pet ? string(_collection_pet.super.damage) + " x opposing pets" : string(_collection_pet.super.damage);
+            var _collection_super_text = "SUPER   " + _collection_pet.super.name + "  " + _collection_super_damage + (_collection_pet.super.stun > 0 ? " + STUN" : "");
+            var _collection_tags_text = "TAGS    " + string(_collection_pet.tags);
+            var _collection_health_scale = fit_text_scale(_collection_health_text, _collection_text_width, 1);
+            var _collection_basic_scale = fit_text_scale(_collection_basic_text, _collection_text_width, 1);
+            var _collection_super_scale = fit_text_scale(_collection_super_text, _collection_text_width, 1);
+            var _collection_tags_scale = fit_text_scale(_collection_tags_text, _collection_text_width, 1);
+            draw_text_transformed(_collection_x + 130, _collection_y + 60, _collection_health_text, _collection_health_scale, _collection_health_scale, 0);
+            draw_text_transformed(_collection_x + 130, _collection_y + 88, _collection_basic_text, _collection_basic_scale, _collection_basic_scale, 0);
+            draw_text_transformed(_collection_x + 130, _collection_y + 116, _collection_super_text, _collection_super_scale, _collection_super_scale, 0);
+            draw_text_transformed(_collection_x + 130, _collection_y + 144, _collection_tags_text, _collection_tags_scale, _collection_tags_scale, 0);
             if (_collection_selected_number > 0) {
                 draw_set_halign(fa_center);
                 draw_set_color(make_color_rgb(25, 155, 85));
@@ -377,28 +397,38 @@ if (screen == "battle") {
             var _short_pet_name = string_replace(_pet.definition.name, " (Placeholder)", "");
             var _status = (_pet.shield > 0 ? "Shield " : "") + (_pet.stun_turns > 0 ? "Stunned" : "");
             if (_compact_cards) {
-                if (_pet.definition.sprite != -1) draw_sprite_ext(_pet.definition.sprite, 0, _cx + 29, _cy + 34, 0.2, 0.2, 0, c_white, _pet.health > 0 ? 1 : 0.35);
+                if (_pet.definition.sprite != -1) draw_pet_sprite_fit(_pet.definition.sprite, _cx + 5, _cy + 5, 47, 54, _pet.health > 0 ? 1 : 0.35);
                 draw_set_halign(fa_left);
                 draw_set_color(c_white);
-                draw_text_transformed(_cx + 57, _cy + 7, _short_pet_name, 0.76, 0.76, 0);
+                var _compact_text_width = _card_width - 63;
+                var _compact_name_scale = fit_text_scale(_short_pet_name, _compact_text_width, 0.76);
+                draw_text_transformed(_cx + 57, _cy + 7, _short_pet_name, _compact_name_scale, _compact_name_scale, 0);
                 draw_set_color(make_color_rgb(220, 230, 250));
-                draw_text_transformed(_cx + 57, _cy + 27, "1 " + _pet.definition.basic.name + "  " + string(_pet.definition.basic.damage + _pet.attack_bonus), 0.76, 0.76, 0);
+                var _compact_basic_text = "1 " + _pet.definition.basic.name + "  " + string(_pet.definition.basic.damage + _pet.attack_bonus);
+                var _compact_basic_scale = fit_text_scale(_compact_basic_text, _compact_text_width, 0.76);
+                draw_text_transformed(_cx + 57, _cy + 27, _compact_basic_text, _compact_basic_scale, _compact_basic_scale, 0);
                 draw_set_color(_pet.super_used ? make_color_rgb(125, 130, 145) : make_color_rgb(255, 220, 105));
-                draw_text_transformed(_cx + 57, _cy + 46, "2 " + _pet.definition.super.name + "  " + string(_pet.definition.super.damage + _pet.attack_bonus), 0.76, 0.76, 0);
+                var _compact_super_damage = _pet.definition.super.per_target_pet ? string(_pet.definition.super.damage) + "x PETS" : string(_pet.definition.super.damage + _pet.attack_bonus);
+                var _compact_super_text = "2 " + _pet.definition.super.name + "  " + _compact_super_damage + (_pet.definition.super.stun > 0 ? " +STUN" : "");
+                var _compact_super_scale = fit_text_scale(_compact_super_text, _compact_text_width, 0.76);
+                draw_text_transformed(_cx + 57, _cy + 46, _compact_super_text, _compact_super_scale, _compact_super_scale, 0);
                 draw_set_color(make_color_rgb(35, 35, 45));
                 draw_rectangle(_cx + 7, _cy + 68, _cx + _card_width - 7, _cy + 80, false);
                 draw_set_color(_pet.health > _pet.definition.max_health * 0.35 ? make_color_rgb(80, 220, 120) : make_color_rgb(235, 80, 75));
                 draw_rectangle(_cx + 7, _cy + 68, _cx + 7 + (_card_width - 14) * (_pet.health / _pet.definition.max_health), _cy + 80, false);
                 draw_set_halign(fa_center);
                 draw_set_color(c_white);
-                draw_text(_cx + _card_width * 0.5, _cy + 82, string(_pet.health) + "/" + string(_pet.definition.max_health) + (_status == "" ? "" : "  " + _status));
+                var _compact_health_text = string(_pet.health) + "/" + string(_pet.definition.max_health) + (_status == "" ? "" : "  " + _status);
+                var _compact_health_scale = fit_text_scale(_compact_health_text, _card_width - 14, 1);
+                draw_text_transformed(_cx + _card_width * 0.5, _cy + 82, _compact_health_text, _compact_health_scale, _compact_health_scale, 0);
             } else {
                 draw_set_halign(fa_center);
                 draw_set_color(c_white);
-                draw_text(_cx + _card_width * 0.5, _cy + 10, _short_pet_name);
+                var _tall_name_scale = fit_text_scale(_short_pet_name, _card_width - 14, 1);
+                draw_text_transformed(_cx + _card_width * 0.5, _cy + 10, _short_pet_name, _tall_name_scale, _tall_name_scale, 0);
 
                 if (_pet.definition.sprite != -1) {
-                    draw_sprite_ext(_pet.definition.sprite, 0, _cx + _card_width * 0.5, _cy + 67, 0.36, 0.36, 0, c_white, _pet.health > 0 ? 1 : 0.35);
+                    draw_pet_sprite_fit(_pet.definition.sprite, _cx + 12, _cy + 30, _card_width - 24, 68, _pet.health > 0 ? 1 : 0.35);
                 } else {
                     draw_set_color(make_color_rgb(82, 99, 130));
                     draw_roundrect(_cx + _card_width * 0.5 - 38, _cy + 38, _cx + _card_width * 0.5 + 38, _cy + 88, false);
@@ -407,9 +437,14 @@ if (screen == "battle") {
                 }
 
                 draw_set_color(make_color_rgb(220, 230, 250));
-                draw_text(_cx + _card_width * 0.5, _cy + 105, "1 " + _pet.definition.basic.name + "  " + string(_pet.definition.basic.damage + _pet.attack_bonus));
+                var _tall_basic_text = "1 " + _pet.definition.basic.name + "  " + string(_pet.definition.basic.damage + _pet.attack_bonus);
+                var _tall_basic_scale = fit_text_scale(_tall_basic_text, _card_width - 14, 1);
+                draw_text_transformed(_cx + _card_width * 0.5, _cy + 105, _tall_basic_text, _tall_basic_scale, _tall_basic_scale, 0);
                 draw_set_color(_pet.super_used ? make_color_rgb(125, 130, 145) : make_color_rgb(255, 220, 105));
-                draw_text(_cx + _card_width * 0.5, _cy + 130, "2 " + _pet.definition.super.name + "  " + string(_pet.definition.super.damage + _pet.attack_bonus));
+                var _tall_super_damage = _pet.definition.super.per_target_pet ? string(_pet.definition.super.damage) + " x PETS" : string(_pet.definition.super.damage + _pet.attack_bonus);
+                var _tall_super_text = "2 " + _pet.definition.super.name + "  " + _tall_super_damage + (_pet.definition.super.stun > 0 ? " + STUN" : "");
+                var _tall_super_scale = fit_text_scale(_tall_super_text, _card_width - 14, 1);
+                draw_text_transformed(_cx + _card_width * 0.5, _cy + 130, _tall_super_text, _tall_super_scale, _tall_super_scale, 0);
                 draw_set_color(make_color_rgb(35, 35, 45));
                 draw_rectangle(_cx + 7, _cy + 154, _cx + _card_width - 7, _cy + 168, false);
                 draw_set_color(_pet.health > _pet.definition.max_health * 0.35 ? make_color_rgb(80, 220, 120) : make_color_rgb(235, 80, 75));
@@ -434,7 +469,15 @@ if (screen == "battle") {
         var _selected_target_pet = selected_target >= 0 ? match.players[selected_target div _team_size].pets[selected_target mod _team_size] : undefined;
         var _selection_text = match.players[_current_index].card.name + " - " + match.players[_current_index].card.description;
         if (selected_action != "card" && _has_selected_pet) {
-            _selection_text = selected_action == "super" ? _selected_pet.definition.super.name + " - " + string(_selected_pet.definition.super.damage + _selected_pet.attack_bonus) + " damage" : _selected_pet.definition.basic.name + " - " + string(_selected_pet.definition.basic.damage + _selected_pet.attack_bonus) + " damage";
+            if (selected_action == "super") {
+                var _selected_super_damage = _selected_pet.definition.super.damage;
+                if (_selected_pet.definition.super.per_target_pet && selected_target >= 0) {
+                    _selected_super_damage *= bp_player_living_pet_count(match.players[selected_target div _team_size]);
+                }
+                _selection_text = _selected_pet.definition.super.name + " - " + string(_selected_super_damage + _selected_pet.attack_bonus) + " damage" + (_selected_pet.definition.super.per_target_pet ? " (40 x living opposing pets)" : "") + (_selected_pet.definition.super.stun > 0 ? " + stun next turn" : "");
+            } else {
+                _selection_text = _selected_pet.definition.basic.name + " - " + string(_selected_pet.definition.basic.damage + _selected_pet.attack_bonus) + " damage";
+            }
         }
         draw_text(25, 844, "SELECTED: " + (_has_selected_pet ? _selected_pet.definition.name : "Specialty Card") + " | " + _selection_text + (_selected_target_pet == undefined ? "" : " | TARGET: " + _selected_target_pet.definition.name));
     }
@@ -508,7 +551,8 @@ if (screen == "battle") {
         draw_text(_gw * 0.5, 305, (_details_are_actor ? "YOUR ACTING PET" : "TARGET PET") + " - " + _detail_owner.name);
         draw_text(_gw * 0.5, 335, "Health: " + string(_detail_pet.health) + "/" + string(_detail_pet.definition.max_health) + "    Tags: " + string(_detail_pet.definition.tags));
         draw_text_transformed(_gw * 0.5, 395, "BASIC - " + _detail_pet.definition.basic.name + " - " + string(_detail_pet.definition.basic.damage + _detail_pet.attack_bonus) + " damage", 1.35, 1.35, 0);
-        draw_text_transformed(_gw * 0.5, 450, "SUPER - " + _detail_pet.definition.super.name + " - " + string(_detail_pet.definition.super.damage + _detail_pet.attack_bonus) + " damage" + (_detail_pet.super_used ? " (USED)" : " (ONCE PER MATCH)"), 1.35, 1.35, 0);
+        var _detail_super_damage = _detail_pet.definition.super.per_target_pet ? string(_detail_pet.definition.super.damage) + " x TARGET'S LIVING PETS" : string(_detail_pet.definition.super.damage + _detail_pet.attack_bonus) + " damage";
+        draw_text_transformed(_gw * 0.5, 450, "SUPER - " + _detail_pet.definition.super.name + " - " + _detail_super_damage + (_detail_pet.definition.super.stun > 0 ? " + STUN NEXT TURN" : "") + (_detail_pet.super_used ? " (USED)" : " (ONCE PER MATCH)"), 1.35, 1.35, 0);
         draw_set_color(make_color_rgb(180, 235, 205));
         draw_text_ext(_gw * 0.5, 515, "ABILITY: " + _detail_pet.definition.ability, 18, 620);
         draw_set_color(make_color_rgb(225, 205, 240));

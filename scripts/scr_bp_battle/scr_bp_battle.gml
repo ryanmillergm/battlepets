@@ -87,6 +87,14 @@ function bp_player_has_living_pet(_player) {
     return false;
 }
 
+function bp_player_living_pet_count(_player) {
+    var _count = 0;
+    for (var _i = 0; _i < array_length(_player.pets); _i++) {
+        if (bp_pet_alive(_player.pets[_i])) _count += 1;
+    }
+    return _count;
+}
+
 function bp_player_has_revive(_player) {
     return !_player.card_used && _player.card.effect == "revive";
 }
@@ -175,9 +183,13 @@ function bp_apply_action(_match, _player_index, _actor_slot, _action, _target_pl
         var _actor = _player.pets[_actor_slot];
         var _attack = _action == "super" ? _actor.definition.super : _actor.definition.basic;
         if (_action == "super") _actor.super_used = true;
-        var _damage = bp_damage_pet(_target, _attack.damage + _actor.attack_bonus, _attack.unblockable);
+        var _attack_damage = _attack.damage;
+        if (_attack.per_target_pet) _attack_damage *= bp_player_living_pet_count(_target_owner);
+        var _damage = bp_damage_pet(_target, _attack_damage + _actor.attack_bonus, _attack.unblockable);
+        if (_attack.stun > 0 && _damage > 0 && bp_pet_alive(_target)) _target.stun_turns = max(_target.stun_turns, _attack.stun);
         _message = _player.name + "'s " + _actor.definition.name + " used " + _attack.name + " on " + _target.definition.name;
         _message += _damage == 0 ? ", but a shield blocked it." : " for " + string(_damage) + " damage.";
+        if (_attack.stun > 0 && _damage > 0 && bp_pet_alive(_target)) _message += " " + _target.definition.name + " is stunned for its next turn.";
     }
 
     if (_target.health <= 0) _message += " " + _target.definition.name + " was knocked out!";

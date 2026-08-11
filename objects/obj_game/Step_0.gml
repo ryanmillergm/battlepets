@@ -64,12 +64,13 @@ switch (screen) {
         if (keyboard_check_pressed(ord("B"))) {
             tutorial = false;
             play_mode = "bot";
-            setup_players = max(2, setup_players);
+            load_setup_for_mode("bot");
             screen = "setup";
         }
         if (keyboard_check_pressed(ord("L"))) {
             tutorial = false;
             play_mode = "local";
+            load_setup_for_mode("local");
             screen = "setup";
         }
         break;
@@ -132,12 +133,14 @@ switch (screen) {
         break;
 
     case "setup":
-        if (keyboard_check_pressed(vk_up)) setup_players = min(8, setup_players + 1);
-        if (keyboard_check_pressed(vk_down)) setup_players = max(2, setup_players - 1);
-        if (keyboard_check_pressed(vk_right)) setup_team_size = min(4, setup_team_size + 1);
-        if (keyboard_check_pressed(vk_left)) setup_team_size = max(2, setup_team_size - 1);
-        if (keyboard_check_pressed(ord("D"))) setup_difficulty = (setup_difficulty + 1) mod 3;
-        if (play_mode == "bot" && keyboard_check_pressed(ord("S"))) setup_bot_speed = (setup_bot_speed + 1) mod 3;
+        var _setup_changed = false;
+        if (keyboard_check_pressed(vk_up)) { setup_players = min(8, setup_players + 1); _setup_changed = true; }
+        if (keyboard_check_pressed(vk_down)) { setup_players = max(2, setup_players - 1); _setup_changed = true; }
+        if (keyboard_check_pressed(vk_right)) { setup_team_size = min(4, setup_team_size + 1); _setup_changed = true; }
+        if (keyboard_check_pressed(vk_left)) { setup_team_size = max(2, setup_team_size - 1); _setup_changed = true; }
+        if (play_mode == "bot" && keyboard_check_pressed(ord("D"))) { setup_difficulty = (setup_difficulty + 1) mod 3; _setup_changed = true; }
+        if (play_mode == "bot" && keyboard_check_pressed(ord("S"))) { setup_bot_speed = (setup_bot_speed + 1) mod 3; _setup_changed = true; }
+        if (_setup_changed) save_setup_for_mode(play_mode);
         if (play_mode == "bot" && keyboard_check_pressed(ord("C"))) open_collection("setup", -1);
         if (keyboard_check_pressed(vk_enter)) {
             if (play_mode == "local") {

@@ -2,7 +2,7 @@
 
 ## Current automated checks
 
-The GameMaker client runs self-tests when `obj_game` is created. They construct every supported player/team-size combination and check basic attacks, shields, and unblockable behavior. A successful startup writes `BATTLEPETS SELF-TESTS PASSED` to the GameMaker output log.
+The GameMaker client runs self-tests when `obj_game` is created. They construct every supported player/team-size combination and check basic attacks, shields, unblockable behavior, bot target priority, and Axle's living-opponent-pet Multistrike scaling. A successful startup writes `BATTLEPETS SELF-TESTS PASSED` to the GameMaker output log.
 
 The TypeScript service has four battle reducer tests. Run:
 

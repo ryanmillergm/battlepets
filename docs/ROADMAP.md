@@ -9,7 +9,7 @@
 
 ## M1 — Offline battle vertical slice
 
-- Data-defined catalog with Bailly, Porcha & Mercadies, and six labeled placeholders.
+- Data-defined eight-pet catalog with original characters and remaining labeled development placeholders.
 - Deterministic battle engine for 2–8 players and 2–4 pets each.
 - Main menu, tutorial, Bot, Local, battle setup, battle board, and results.
 - Easy, Normal, and Hard bot behavior.

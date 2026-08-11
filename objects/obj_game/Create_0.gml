@@ -6,15 +6,21 @@ global.bp_self_tests_passed = bp_run_self_tests(catalog);
 
 ini_open("battlepets_save.ini");
 battle_coins = max(0, floor(ini_read_real("currency", "battle_coins", 0)));
+saved_bot_players = clamp(floor(ini_read_real("bot_setup", "players", 2)), 2, 8);
+saved_bot_team_size = clamp(floor(ini_read_real("bot_setup", "team_size", 2)), 2, 4);
+saved_bot_difficulty = clamp(floor(ini_read_real("bot_setup", "difficulty", 0)), 0, 2);
+saved_bot_speed = clamp(floor(ini_read_real("bot_setup", "speed", 0)), 0, 2);
+saved_local_players = clamp(floor(ini_read_real("local_setup", "players", 2)), 2, 8);
+saved_local_team_size = clamp(floor(ini_read_real("local_setup", "team_size", 2)), 2, 4);
 ini_close();
 
 screen = "main";
 screen_before_pause = "battle";
 play_mode = "bot";
-setup_players = 2;
-setup_team_size = 2;
-setup_difficulty = 0;
-setup_bot_speed = 0;
+setup_players = saved_bot_players;
+setup_team_size = saved_bot_team_size;
+setup_difficulty = saved_bot_difficulty;
+setup_bot_speed = saved_bot_speed;
 match = undefined;
 selected_actor = 0;
 selected_action = "basic";
@@ -57,6 +63,38 @@ get_bot_think_delay = function() {
 save_battle_coins = function() {
     ini_open("battlepets_save.ini");
     ini_write_real("currency", "battle_coins", battle_coins);
+    ini_close();
+};
+
+load_setup_for_mode = function(_mode) {
+    if (_mode == "bot") {
+        setup_players = saved_bot_players;
+        setup_team_size = saved_bot_team_size;
+        setup_difficulty = saved_bot_difficulty;
+        setup_bot_speed = saved_bot_speed;
+    } else if (_mode == "local") {
+        setup_players = saved_local_players;
+        setup_team_size = saved_local_team_size;
+    }
+};
+
+save_setup_for_mode = function(_mode) {
+    ini_open("battlepets_save.ini");
+    if (_mode == "bot") {
+        saved_bot_players = setup_players;
+        saved_bot_team_size = setup_team_size;
+        saved_bot_difficulty = setup_difficulty;
+        saved_bot_speed = setup_bot_speed;
+        ini_write_real("bot_setup", "players", saved_bot_players);
+        ini_write_real("bot_setup", "team_size", saved_bot_team_size);
+        ini_write_real("bot_setup", "difficulty", saved_bot_difficulty);
+        ini_write_real("bot_setup", "speed", saved_bot_speed);
+    } else if (_mode == "local") {
+        saved_local_players = setup_players;
+        saved_local_team_size = setup_team_size;
+        ini_write_real("local_setup", "players", saved_local_players);
+        ini_write_real("local_setup", "team_size", saved_local_team_size);
+    }
     ini_close();
 };
 

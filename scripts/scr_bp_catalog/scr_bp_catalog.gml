@@ -1,12 +1,18 @@
-function bp_pet_definition(_id, _name, _health, _basic_name, _basic_damage, _super_name, _super_damage, _tags, _sprite, _unblockable) {
+function bp_pet_definition(_id, _name, _health, _basic_name, _basic_damage, _super_name, _super_damage, _tags, _sprite, _unblockable, _super_stun, _super_per_target_pet) {
     return {
         id: _id,
         name: _name,
         max_health: _health,
         tags: _tags,
         sprite: _sprite,
-        basic: { name: _basic_name, damage: _basic_damage, unblockable: _unblockable },
-        super: { name: _super_name, damage: _super_damage, unblockable: false },
+        basic: { name: _basic_name, damage: _basic_damage, unblockable: _unblockable, stun: 0, per_target_pet: false },
+        super: {
+            name: _super_name,
+            damage: _super_damage,
+            unblockable: false,
+            stun: is_undefined(_super_stun) ? 0 : _super_stun,
+            per_target_pet: is_undefined(_super_per_target_pet) ? false : _super_per_target_pet
+        },
         ability: _unblockable ? "Quick: basic attacks cannot be blocked" : "None"
     };
 }
@@ -26,11 +32,11 @@ function bp_card_definition(_id, _name, _description, _effect, _amount) {
 function bp_catalog_create() {
     var _pets = [
         bp_pet_definition("bailly", "Bailly", 90, "Golden Kick", 16, "Sunburst", 34, ["fur"], Bailly, true),
-        bp_pet_definition("porcha_mercadies", "Porcha & Mercadies", 110, "Double Pounce", 15, "Best Friends", 31, ["cat", "fur"], BPPorchaandMercadies, false),
+        bp_pet_definition("porcha_mercadies", "Porcha & Mercadies", 160, "Aggressive", 50, "Double Hair", 70, ["cat", "fur"], BPPorchaandMercadies, false, 1),
         bp_pet_definition("ember", "Ember (Placeholder)", 82, "Spark", 18, "Firework", 36, ["fur"], -1, false),
         bp_pet_definition("moss", "Moss (Placeholder)", 125, "Bramble", 13, "Overgrowth", 28, ["plant"], -1, false),
-        bp_pet_definition("pebble", "Pebble (Placeholder)", 140, "Bump", 12, "Rockslide", 30, ["stone"], -1, false),
-        bp_pet_definition("ripple", "Ripple (Placeholder)", 100, "Splash", 16, "Tidal Wave", 33, ["water"], -1, false),
+        bp_pet_definition("jack", "Jack", 140, "Bump", 12, "Rockslide", 30, ["stone"], Sprite9, false),
+        bp_pet_definition("axle", "Axle", 130, "Tail Whip", 45, "Multistrike", 40, ["dog", "fur"], Axle, false, 0, true),
         bp_pet_definition("whisk", "Whisk (Placeholder)", 78, "Swipe", 19, "Nine Lives", 35, ["cat", "fur"], -1, true),
         bp_pet_definition("sprout", "Sprout (Placeholder)", 115, "Seed Pop", 14, "Bloom Blast", 32, ["plant"], -1, false)
     ];
@@ -43,5 +49,5 @@ function bp_catalog_create() {
         bp_card_definition("boost", "Power Snack", "Add 8 damage to one pet's attacks for the rest of the match.", "boost", 8)
     ];
 
-    return { pets: _pets, cards: _cards, version: 1 };
+    return { pets: _pets, cards: _cards, version: 2 };
 }

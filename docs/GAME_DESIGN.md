@@ -7,6 +7,7 @@
 - Bot, local pass-and-play, casual online, and competitive online modes.
 - The host selects a 15-, 30-, or 60-second online turn timer.
 - All pets are active, visible, and targetable.
+- Bot and Local setup preferences are stored separately and restored when returning to the mode or restarting the game. Bot preferences include player count, team size, difficulty, and turn speed; Local preferences include player count and team size.
 
 ## Turn and victory rules
 
@@ -26,6 +27,10 @@ Each pet has:
 - At most one optional initiated or automatic special ability in the first release.
 
 Damage is fixed. There are no misses or general speed/defense stats. An unblockable speed attack bypasses shields and attack-cancel effects.
+
+Porcha & Mercadies have 160 maximum health and use `Aggressive` as a 50-damage basic attack. Their once-per-match `Double Hair` super deals 70 damage and, if the target survives, stuns it for its next turn.
+
+Axle has 130 maximum health and uses `Tail Whip` as a 45-damage basic attack. His once-per-match `Multistrike` super deals 40 damage for each living pet on the targeted opponent's team. For example, it attempts 40 damage when one opposing pet remains, 80 with two, 120 with three, or 160 with four; the combined damage is applied to the selected target.
 
 ## Specialty cards
 

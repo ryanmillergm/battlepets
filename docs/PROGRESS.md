@@ -1,5 +1,11 @@
 # Progress
 
+## Axle roster update
+
+- [x] Replaced the Ripple placeholder with Axle and assigned the `Axle` sprite asset.
+- [x] Set Axle to 130 health, `Tail Whip` at 45 damage, and the once-per-match `Multistrike` super at 40 damage per living pet on the targeted opponent's team.
+- [x] Added dynamic Multistrike damage calculation, visible multiplier explanations, and a self-test covering a three-pet target team for 120 attempted damage.
+
 ## Status legend
 
 - `[ ]` not started
