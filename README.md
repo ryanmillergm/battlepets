@@ -30,6 +30,8 @@ The repository now contains a playable offline foundation, deterministic battle 
 2. Run the project using the Windows target.
 3. Treat generated `*.resource_order` files as local IDE state; they are ignored.
 
+On the main menu, click `FULLSCREEN` to enter true fullscreen mode or `WINDOWED` to return. `F11` and `Alt+Enter` are also available as keyboard shortcuts.
+
 ### Local service and admin dashboard
 
 1. Copy the root `.env.example` to `.env` and set a local PostgreSQL password.

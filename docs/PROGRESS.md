@@ -54,6 +54,7 @@
 ## Verification completed
 
 - [x] GameMaker Windows build and startup smoke test completed; runtime reported `BATTLEPETS SELF-TESTS PASSED`.
+- [x] Added a main-menu-only `FULLSCREEN` / `WINDOWED` button, retained `F11` and `Alt+Enter` shortcuts, rebuilt and installed the Windows game, and manually confirmed true fullscreen switching on August 11, 2026.
 - [x] Server TypeScript build completed successfully.
 - [x] Server battle tests passed (4 tests).
 - [x] Prisma client generation completed successfully.

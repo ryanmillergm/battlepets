@@ -27,6 +27,7 @@ npm run build
 3. Request `http://localhost:3000/health` and confirm an `ok` response.
 4. Start the dashboard with `npm run dev` in `admin/` and confirm its API indicator becomes green.
 5. Run the GameMaker Windows target and confirm its self-test message.
+6. On the main menu, click `FULLSCREEN` and confirm true fullscreen mode opens and the button changes to `WINDOWED`; confirm the button is hidden on every other screen, returning to the main menu restores access to it, and the 1600x900 GUI layout remains intact. Repeat the mode toggle with `F11` and `Alt+Enter`.
 
 ## Required manual battle matrix
 

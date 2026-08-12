@@ -1,3 +1,13 @@
+var _fullscreen_click = false;
+if (screen == "main" && mouse_check_button_pressed(mb_left)) {
+    var _fullscreen_mx = device_mouse_x_to_gui(0);
+    var _fullscreen_my = device_mouse_y_to_gui(0);
+    _fullscreen_click = _fullscreen_mx >= 1360 && _fullscreen_mx <= 1580 && _fullscreen_my >= 18 && _fullscreen_my <= 62;
+}
+if (_fullscreen_click || keyboard_check_pressed(vk_f11)) {
+    window_set_fullscreen(!window_get_fullscreen());
+}
+
 if (screen == "local_roster" && roster_editing) {
     local_player_names[roster_selected] = string_copy(keyboard_string, 1, 18);
     if (keyboard_check_pressed(vk_enter)) {
