@@ -186,7 +186,13 @@ switch (screen) {
         break;
 
     case "mode":
-        if (keyboard_check_pressed(ord("S"))) screen = "shop";
+        var _trading_selected = keyboard_check_pressed(ord("T"));
+        if (mouse_check_button_pressed(mb_left)) {
+            var _mode_mx = device_mouse_x_to_gui(0);
+            var _mode_my = device_mouse_y_to_gui(0);
+            if (_mode_mx >= 1020 && _mode_mx <= 1380 && _mode_my >= 120 && _mode_my <= 335) _trading_selected = true;
+        }
+        if (_trading_selected) economy_message = "Trading is coming in M4.";
         if (keyboard_check_pressed(ord("B"))) {
             if (array_length(owned_pet_ids) < 2) {
                 economy_message = "Own at least 2 different Battlepets before playing.";

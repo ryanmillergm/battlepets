@@ -80,7 +80,7 @@ Bot matches offer Relaxed, Normal, and Quick turn-presentation speeds. This sett
 
 ## Collection and shop
 
-- After the title screen, the main hub presents Inventory, Play, and Shop. Play opens the Bot/Local choices. Shop opens with `S`; its PET PACKS card opens with `P` or a left click.
+- After the title screen, the main hub presents Inventory, Play, and Shop. Play opens Bot, Local, and a green planned Trading entry; selecting Trading currently reports that it is coming in M4. The separate main-hub Shop opens with `S`; its PET PACKS card opens with `P` or a left click.
 - The local development pack shop sells Basic (30 coins), Uncommon (50), Epic (75), and Legendary (100) packs. Each contains two different pets and displays its exact rarity and per-pet draw odds before confirmation.
 - Inventory persists owned copy quantities. Any copy may be sold after two confirmations for 5/10/20/30 coins at Basic/Uncommon/Epic/Legendary rarity; selling the last copy removes that pet from available lineups.
 - Bot setup opens Collection with `C`; Local opens it with `C` on each selected roster seat. The collection shows owned pets in stat cards plus empty future slots. Players select exactly the configured team size with no duplicate definitions. Bot mode applies the lineup to Player 1; Local mode stores a separate lineup for every configured seat. The same screen is intended for the registered profile in Online mode.

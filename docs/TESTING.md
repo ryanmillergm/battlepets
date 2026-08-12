@@ -28,6 +28,8 @@ npm run build
 4. Start the dashboard with `npm run dev` in `admin/` and confirm its API indicator becomes green.
 5. Run the GameMaker Windows target and confirm its self-test message.
 6. On the main menu, click `FULLSCREEN` and confirm true fullscreen mode opens and the button changes to `WINDOWED`; confirm the button is hidden on every other screen, returning to the main menu restores access to it, and the 1600x900 GUI layout remains intact. Repeat the mode toggle with `F11` and `Alt+Enter`.
+7. Confirm Windows builds and installed Desktop shortcuts display the white icon with centered gold `BP` lettering at small and large icon sizes.
+8. Open Play and confirm the green Trading entry replaces Shop; `T` and a left click report that Trading is coming in M4, while the main-hub Shop remains available.
 
 ## Required manual battle matrix
 

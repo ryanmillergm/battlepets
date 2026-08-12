@@ -12,6 +12,7 @@
 - [x] Added persistent pet quantities, pack purchase confirmations/results, and Battle Coin deductions.
 - [x] Added Inventory with duplicate counts, two-step selling, lineup cleanup, and rarity-based coin returns.
 - [x] Added the Inventory / Play / Shop hub plus keyboard and mouse pack navigation.
+- [x] Replaced the redundant Shop link inside the Play submenu with a green planned Trading entry and M4 placeholder feedback.
 
 ## Status legend
 
@@ -55,6 +56,7 @@
 
 - [x] GameMaker Windows build and startup smoke test completed; runtime reported `BATTLEPETS SELF-TESTS PASSED`.
 - [x] Added a main-menu-only `FULLSCREEN` / `WINDOWED` button, retained `F11` and `Alt+Enter` shortcuts, rebuilt and installed the Windows game, and manually confirmed true fullscreen switching on August 11, 2026.
+- [x] Added the white-and-gold `BP` Windows application icon source, PNG preview, and ICO asset for desktop shortcuts and packaged installs on August 11, 2026.
 - [x] Server TypeScript build completed successfully.
 - [x] Server battle tests passed (4 tests).
 - [x] Prisma client generation completed successfully.

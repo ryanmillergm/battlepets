@@ -253,10 +253,12 @@ if (screen == "mode") {
     draw_text_transformed(_gw * 0.32, 330, "B  -  BOTS", 1.5, 1.5, 0);
     draw_set_color(make_color_rgb(110, 235, 155));
     draw_text_transformed(_gw * 0.32, 420, "L  -  LOCAL (TAKE TURNS)", 1.5, 1.5, 0);
-    draw_set_color(make_color_rgb(0, 165, 175));
-    draw_text_transformed(_gw * 0.75, 170, "S  -  SHOP", 2, 2, 0);
-    draw_set_color(make_color_rgb(55, 115, 120));
-    draw_text_transformed(_gw * 0.75, 235, "Packs, Specialties, Pets", 1.1, 1.1, 0);
+    draw_set_color(make_color_rgb(25, 155, 85));
+    draw_text_transformed(_gw * 0.75, 170, "T  -  TRADING", 2, 2, 0);
+    draw_set_color(make_color_rgb(55, 125, 85));
+    draw_text_transformed(_gw * 0.75, 235, "Trade Battlepets with other players", 1.1, 1.1, 0);
+    draw_set_color(make_color_rgb(95, 108, 132));
+    draw_text_transformed(_gw * 0.75, 300, "COMING IN M4", 1.25, 1.25, 0);
     draw_set_color(make_color_rgb(95, 108, 132));
     draw_text_transformed(_gw * 0.32, 510, "ONLINE  -  COMING IN M3", 1.25, 1.25, 0);
     draw_set_color(make_color_rgb(13, 20, 38));
