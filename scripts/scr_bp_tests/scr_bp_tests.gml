@@ -7,6 +7,20 @@ function bp_test_check(_condition, _message) {
 function bp_run_self_tests(_catalog) {
     var _passed = true;
 
+    _passed = bp_test_check(array_length(_catalog.packs) == 4, "four pack tiers") && _passed;
+    for (var _pack_test = 0; _pack_test < array_length(_catalog.packs); _pack_test++) {
+        var _weight_total = 0;
+        for (var _weight_test = 0; _weight_test < array_length(_catalog.packs[_pack_test].weights); _weight_test++) {
+            _weight_total += _catalog.packs[_pack_test].weights[_weight_test];
+            if (_weight_test > _catalog.packs[_pack_test].maximum_rarity) {
+                _passed = bp_test_check(_catalog.packs[_pack_test].weights[_weight_test] == 0, "pack excludes rarities above its tier") && _passed;
+            }
+        }
+        _passed = bp_test_check(_weight_total == 100, "pack rarity odds total 100") && _passed;
+        _passed = bp_test_check(bp_pack_roll_rarity(_catalog.packs[_pack_test], 0) <= _catalog.packs[_pack_test].maximum_rarity, "pack minimum roll respects tier") && _passed;
+        _passed = bp_test_check(bp_pack_roll_rarity(_catalog.packs[_pack_test], 99) <= _catalog.packs[_pack_test].maximum_rarity, "pack maximum roll respects tier") && _passed;
+    }
+
     for (var _players = 2; _players <= 8; _players++) {
         for (var _team_size = 2; _team_size <= 4; _team_size++) {
             var _names = [];

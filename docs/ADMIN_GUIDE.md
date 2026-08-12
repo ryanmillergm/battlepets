@@ -87,6 +87,8 @@ Create cards from approved effect primitives only. Configure trigger (manual/aut
 
 ## Rarities, packs, prices, and exchange recipes
 
+The current offline development catalog assigns Ember/Sprout to Basic, Moss/Whisk to Uncommon, Jack/Bailly to Epic, and Axle/Porcha & Mercadies to Legendary. These local definitions are temporary until the secured publishing workflow replaces them.
+
 1. Create rarity tiers before assigning pets; supply a stable slug, display label, display order, accessible color, and active state.
 2. A pack contains exactly two draws. Select eligible published pets and configure weights.
 3. The system must calculate and display normalized exact per-pet odds; the administrator reviews the calculated result rather than entering contradictory marketing odds.

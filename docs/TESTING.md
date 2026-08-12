@@ -2,7 +2,7 @@
 
 ## Current automated checks
 
-The GameMaker client runs self-tests when `obj_game` is created. They construct every supported player/team-size combination and check basic attacks, shields, unblockable behavior, bot target priority, and Axle's living-opponent-pet Multistrike scaling. A successful startup writes `BATTLEPETS SELF-TESTS PASSED` to the GameMaker output log.
+The GameMaker client runs self-tests when `obj_game` is created. They construct every supported player/team-size combination and check pack definitions and rarity caps, basic attacks, shields, unblockable behavior, bot target priority, and Axle's living-opponent-pet Multistrike scaling. A successful startup writes `BATTLEPETS SELF-TESTS PASSED` to the GameMaker output log.
 
 The TypeScript service has four battle reducer tests. Run:
 
@@ -33,6 +33,8 @@ npm run build
 Test team sizes 2, 3, and 4 at participant counts 2 through 8. For each supported mode, verify setup, turn rotation, legal/illegal targets, every pet acting, basic attacks, one-use supers, every specialty effect, knockout, revive, elimination, final result, pass-and-play concealment, and each AI level. Automated state-construction coverage does not replace this hands-on matrix.
 
 ## Known coverage gaps
+
+- Pack purchase, save/reload, mouse input, confirmation dialogs, and duplicate-sale flows require manual UI testing.
 
 - No automated client UI/input tests or full 2–8 player gameplay simulations.
 - Offline and TypeScript engines do not yet share generated cross-language fixtures.

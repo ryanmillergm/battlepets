@@ -28,7 +28,7 @@
 
 ## M4 — Collection and economy
 
-- Starter choice, inventory quantities, team builder, direct shop, two-pet packs, published odds, and duplicate redemption.
+- Starter choice, server-backed inventory quantities, team builder, direct shop, and duplicate redemption. A local four-tier pack/inventory economy now prototypes the intended purchase, odds, quantity, and resale flows.
 - Auditable earned/purchased currency ledger.
 
 ## M5 — Safe public release

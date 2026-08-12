@@ -6,6 +6,13 @@
 - [x] Set Axle to 130 health, `Tail Whip` at 45 damage, and the once-per-match `Multistrike` super at 40 damage per living pet on the targeted opponent's team.
 - [x] Added dynamic Multistrike damage calculation, visible multiplier explanations, and a self-test covering a three-pet target team for 120 attempted damage.
 
+## Local pack and inventory economy
+
+- [x] Added four priced, tier-capped Battlepet packs with published draw odds and two different rewards.
+- [x] Added persistent pet quantities, pack purchase confirmations/results, and Battle Coin deductions.
+- [x] Added Inventory with duplicate counts, two-step selling, lineup cleanup, and rarity-based coin returns.
+- [x] Added the Inventory / Play / Shop hub plus keyboard and mouse pack navigation.
+
 ## Status legend
 
 - `[ ]` not started

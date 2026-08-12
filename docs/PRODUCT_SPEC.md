@@ -65,6 +65,8 @@ Guests can use Tutorial, Bot, and Local modes with temporary generic names. Pers
 - A pack contains exactly two pets. Published rarity labels and exact per-pet probabilities must be shown before purchase.
 - Duplicate inventory copies are allowed as quantities, but the same pet definition cannot occupy two lineup slots.
 - A pack should not return the same pet definition twice unless a future pack definition explicitly and visibly permits it.
+- The offline development economy includes four two-pet packs: Basic 30 coins (100% Basic), Uncommon 50 (45% Basic/55% Uncommon), Epic 75 (25% Basic/45% Uncommon/30% Epic), and Legendary 100 (25% Basic/40% Uncommon/30% Epic/5% Legendary).
+- Offline inventory permits selling any copy after two confirmations. Basic, Uncommon, Epic, and Legendary copies return 5, 10, 20, and 30 Battle Coins respectively.
 - Surplus duplicates may be redeemed for an admin-configured fraction of value or exchanged using an admin recipe for a random different pet of the configured rarity rule, such as same-or-higher rarity.
 - Specialty cards are assigned per match and are not collectible inventory.
 - Earned and purchased Battle Coins use separate append-only ledger balances.

@@ -12,6 +12,10 @@ saved_bot_difficulty = clamp(floor(ini_read_real("bot_setup", "difficulty", 0)),
 saved_bot_speed = clamp(floor(ini_read_real("bot_setup", "speed", 0)), 0, 2);
 saved_local_players = clamp(floor(ini_read_real("local_setup", "players", 2)), 2, 8);
 saved_local_team_size = clamp(floor(ini_read_real("local_setup", "team_size", 2)), 2, 4);
+pet_quantities = [];
+for (var _inventory_load = 0; _inventory_load < array_length(catalog.pets); _inventory_load++) {
+    array_push(pet_quantities, max(0, floor(ini_read_real("inventory", catalog.pets[_inventory_load].id, 1))));
+}
 ini_close();
 
 screen = "main";
@@ -52,6 +56,16 @@ collection_cursor = 0;
 collection_return_screen = "setup";
 collection_context_seat = -1;
 collection_slot_count = 12;
+hub_cursor = 1;
+pack_cursor = 0;
+pack_confirm_open = false;
+pack_results = [];
+inventory_cursor = 0;
+sale_confirm_stage = 0;
+economy_message = "";
+
+rarity_names = ["Basic", "Uncommon", "Epic", "Legendary"];
+rarity_sale_values = [5, 10, 20, 30];
 
 bot_think_delays = [90, 50, 18];
 bot_action_delays = [110, 75, 45];
@@ -64,6 +78,91 @@ save_battle_coins = function() {
     ini_open("battlepets_save.ini");
     ini_write_real("currency", "battle_coins", battle_coins);
     ini_close();
+};
+
+save_economy = function() {
+    ini_open("battlepets_save.ini");
+    ini_write_real("currency", "battle_coins", battle_coins);
+    for (var _save_pet = 0; _save_pet < array_length(catalog.pets); _save_pet++) {
+        ini_write_real("inventory", catalog.pets[_save_pet].id, pet_quantities[_save_pet]);
+    }
+    ini_close();
+};
+
+rebuild_owned_pet_ids = function() {
+    owned_pet_ids = [];
+    for (var _owned_pet = 0; _owned_pet < array_length(catalog.pets); _owned_pet++) {
+        if (pet_quantities[_owned_pet] > 0) array_push(owned_pet_ids, catalog.pets[_owned_pet].id);
+    }
+};
+
+catalog_pet_index_by_id = function(_pet_id) {
+    for (var _pet_index = 0; _pet_index < array_length(catalog.pets); _pet_index++) {
+        if (catalog.pets[_pet_index].id == _pet_id) return _pet_index;
+    }
+    return -1;
+};
+
+cleanup_lineups = function() {
+    for (var _bot_slot = array_length(bot_lineup_ids) - 1; _bot_slot >= 0; _bot_slot--) {
+        var _bot_index = catalog_pet_index_by_id(bot_lineup_ids[_bot_slot]);
+        if (_bot_index < 0 || pet_quantities[_bot_index] <= 0) array_delete(bot_lineup_ids, _bot_slot, 1);
+    }
+    for (var _lineup_player = 0; _lineup_player < array_length(local_player_lineups); _lineup_player++) {
+        for (var _lineup_slot = array_length(local_player_lineups[_lineup_player]) - 1; _lineup_slot >= 0; _lineup_slot--) {
+            var _lineup_index = catalog_pet_index_by_id(local_player_lineups[_lineup_player][_lineup_slot]);
+            if (_lineup_index < 0 || pet_quantities[_lineup_index] <= 0) array_delete(local_player_lineups[_lineup_player], _lineup_slot, 1);
+        }
+    }
+};
+
+draw_pack_pet = function(_pack, _excluded_id) {
+    var _rarity = bp_pack_roll_rarity(_pack, irandom(99));
+    var _candidates = [];
+    for (var _draw_index = 0; _draw_index < array_length(catalog.pets); _draw_index++) {
+        var _draw_pet = catalog.pets[_draw_index];
+        if (_draw_pet.rarity == _rarity && _draw_pet.id != _excluded_id) array_push(_candidates, _draw_pet.id);
+    }
+    if (array_length(_candidates) <= 0) return undefined;
+    return _candidates[irandom(array_length(_candidates) - 1)];
+};
+
+purchase_selected_pack = function() {
+    var _pack = catalog.packs[pack_cursor];
+    if (battle_coins < _pack.price) {
+        economy_message = "Not enough Battle Coins.";
+        return false;
+    }
+    var _first_reward = draw_pack_pet(_pack, "");
+    var _second_reward = draw_pack_pet(_pack, _first_reward);
+    if (is_undefined(_first_reward) || is_undefined(_second_reward)) {
+        economy_message = "This pack cannot be opened right now.";
+        return false;
+    }
+    battle_coins -= _pack.price;
+    pet_quantities[catalog_pet_index_by_id(_first_reward)] += 1;
+    pet_quantities[catalog_pet_index_by_id(_second_reward)] += 1;
+    pack_results = [_first_reward, _second_reward];
+    rebuild_owned_pet_ids();
+    save_economy();
+    economy_message = "Pack opened!";
+    pack_confirm_open = false;
+    screen = "pack_result";
+    return true;
+};
+
+sell_selected_pet = function() {
+    if (inventory_cursor < 0 || inventory_cursor >= array_length(catalog.pets)) return false;
+    if (pet_quantities[inventory_cursor] <= 0) return false;
+    var _pet = catalog.pets[inventory_cursor];
+    pet_quantities[inventory_cursor] -= 1;
+    battle_coins += rarity_sale_values[_pet.rarity];
+    rebuild_owned_pet_ids();
+    cleanup_lineups();
+    save_economy();
+    economy_message = "Sold " + _pet.name + " for " + string(rarity_sale_values[_pet.rarity]) + " Battle Coins.";
+    sale_confirm_stage = 0;
+    return true;
 };
 
 load_setup_for_mode = function(_mode) {
@@ -161,6 +260,8 @@ catalog_pet_by_id = function(_pet_id) {
     }
     return undefined;
 };
+
+rebuild_owned_pet_ids();
 
 start_match = function() {
     var _names = [];

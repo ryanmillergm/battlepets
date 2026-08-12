@@ -32,8 +32,19 @@ if (keyboard_check_pressed(vk_escape)) {
     }
     if (screen == "main") {
         game_end();
-    } else if (screen == "shop") {
-        screen = "mode";
+    } else if (screen == "shop" || screen == "inventory") {
+        pack_confirm_open = false;
+        sale_confirm_stage = 0;
+        screen = "hub";
+    } else if (screen == "pack_shop") {
+        pack_confirm_open = false;
+        screen = "shop";
+    } else if (screen == "pack_result") {
+        screen = "pack_shop";
+    } else if (screen == "mode") {
+        screen = "hub";
+    } else if (screen == "hub") {
+        screen = "main";
     } else if (screen == "collection") {
         screen = collection_return_screen;
     } else {
@@ -43,7 +54,7 @@ if (keyboard_check_pressed(vk_escape)) {
 
 switch (screen) {
     case "main":
-        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space)) screen = "mode";
+        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space)) screen = "hub";
         if (keyboard_check_pressed(ord("T"))) {
             tutorial = true;
             play_mode = "bot";
@@ -55,23 +66,138 @@ switch (screen) {
         }
         break;
 
+    case "hub":
+        if (keyboard_check_pressed(vk_left)) hub_cursor = max(0, hub_cursor - 1);
+        if (keyboard_check_pressed(vk_right)) hub_cursor = min(2, hub_cursor + 1);
+        if (keyboard_check_pressed(ord("I"))) { hub_cursor = 0; screen = "inventory"; economy_message = ""; }
+        if (keyboard_check_pressed(ord("P"))) { hub_cursor = 1; screen = "mode"; }
+        if (keyboard_check_pressed(ord("S"))) { hub_cursor = 2; screen = "shop"; }
+        var _hub_click = mouse_check_button_pressed(mb_left);
+        if (_hub_click) {
+            var _hub_mx = device_mouse_x_to_gui(0);
+            var _hub_my = device_mouse_y_to_gui(0);
+            if (_hub_my >= 285 && _hub_my <= 555) {
+                if (_hub_mx >= 238 && _hub_mx <= 578) { hub_cursor = 0; screen = "inventory"; economy_message = ""; }
+                if (_hub_mx >= 613 && _hub_mx <= 953) { hub_cursor = 1; screen = "mode"; }
+                if (_hub_mx >= 988 && _hub_mx <= 1328) { hub_cursor = 2; screen = "shop"; }
+            }
+        }
+        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space)) {
+            if (hub_cursor == 0) { screen = "inventory"; economy_message = ""; }
+            if (hub_cursor == 1) screen = "mode";
+            if (hub_cursor == 2) screen = "shop";
+        }
+        break;
+
     case "shop":
-        // Shop browsing and purchases activate with the M4 collection/economy APIs.
+        var _shop_open_packs = keyboard_check_pressed(ord("P"));
+        if (mouse_check_button_pressed(mb_left)) {
+            var _shop_mx = device_mouse_x_to_gui(0);
+            var _shop_my = device_mouse_y_to_gui(0);
+            if (_shop_mx >= 630 && _shop_mx <= 970 && _shop_my >= 285 && _shop_my <= 555) _shop_open_packs = true;
+        }
+        if (_shop_open_packs) {
+            pack_cursor = 0;
+            pack_confirm_open = false;
+            economy_message = "";
+            screen = "pack_shop";
+        }
+        break;
+
+    case "pack_shop":
+        if (pack_confirm_open) {
+            if (keyboard_check_pressed(ord("C"))) pack_confirm_open = false;
+            if (keyboard_check_pressed(vk_enter)) purchase_selected_pack();
+            if (mouse_check_button_pressed(mb_left)) {
+                var _confirm_mx = device_mouse_x_to_gui(0);
+                var _confirm_my = device_mouse_y_to_gui(0);
+                if (_confirm_my >= 660 && _confirm_my <= 725) {
+                    if (_confirm_mx >= 510 && _confirm_mx <= 750) pack_confirm_open = false;
+                    if (_confirm_mx >= 850 && _confirm_mx <= 1090) purchase_selected_pack();
+                }
+            }
+            break;
+        }
+        if (keyboard_check_pressed(vk_left)) pack_cursor = max(0, pack_cursor - 1);
+        if (keyboard_check_pressed(vk_right)) pack_cursor = min(3, pack_cursor + 1);
+        var _pack_choose = keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space);
+        if (mouse_check_button_pressed(mb_left)) {
+            var _pack_mx = device_mouse_x_to_gui(0);
+            var _pack_my = device_mouse_y_to_gui(0);
+            if (_pack_my >= 280 && _pack_my <= 585) {
+                for (var _pack_click_index = 0; _pack_click_index < 4; _pack_click_index++) {
+                    var _pack_click_x = 85 + _pack_click_index * 380;
+                    if (_pack_mx >= _pack_click_x && _pack_mx <= _pack_click_x + 330) { pack_cursor = _pack_click_index; _pack_choose = true; }
+                }
+            }
+        }
+        if (_pack_choose) { pack_confirm_open = true; economy_message = ""; }
+        break;
+
+    case "pack_result":
+        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space)) screen = "pack_shop";
+        if (mouse_check_button_pressed(mb_left)) screen = "pack_shop";
+        break;
+
+    case "inventory":
+        if (sale_confirm_stage > 0) {
+            if (keyboard_check_pressed(ord("C"))) sale_confirm_stage = 0;
+            if (keyboard_check_pressed(vk_enter)) {
+                if (sale_confirm_stage == 1) sale_confirm_stage = 2; else sell_selected_pet();
+            }
+            if (mouse_check_button_pressed(mb_left)) {
+                var _sale_mx = device_mouse_x_to_gui(0);
+                var _sale_my = device_mouse_y_to_gui(0);
+                if (_sale_my >= 665 && _sale_my <= 730) {
+                    if (_sale_mx >= 510 && _sale_mx <= 750) sale_confirm_stage = 0;
+                    if (_sale_mx >= 850 && _sale_mx <= 1090) { if (sale_confirm_stage == 1) sale_confirm_stage = 2; else sell_selected_pet(); }
+                }
+            }
+            break;
+        }
+        var _inventory_col = inventory_cursor mod 4;
+        var _inventory_row = inventory_cursor div 4;
+        if (keyboard_check_pressed(vk_left)) _inventory_col = max(0, _inventory_col - 1);
+        if (keyboard_check_pressed(vk_right)) _inventory_col = min(3, _inventory_col + 1);
+        if (keyboard_check_pressed(vk_up)) _inventory_row = max(0, _inventory_row - 1);
+        if (keyboard_check_pressed(vk_down)) _inventory_row = min(1, _inventory_row + 1);
+        inventory_cursor = clamp(_inventory_row * 4 + _inventory_col, 0, array_length(catalog.pets) - 1);
+        if (mouse_check_button_pressed(mb_left)) {
+            var _inventory_mx = device_mouse_x_to_gui(0);
+            var _inventory_my = device_mouse_y_to_gui(0);
+            for (var _inventory_click = 0; _inventory_click < array_length(catalog.pets); _inventory_click++) {
+                var _inventory_x = 70 + (_inventory_click mod 4) * 380;
+                var _inventory_y = 225 + (_inventory_click div 4) * 270;
+                if (_inventory_mx >= _inventory_x && _inventory_mx <= _inventory_x + 330 && _inventory_my >= _inventory_y && _inventory_my <= _inventory_y + 225) inventory_cursor = _inventory_click;
+            }
+            if (_inventory_mx >= 620 && _inventory_mx <= 980 && _inventory_my >= 790 && _inventory_my <= 855 && pet_quantities[inventory_cursor] > 0) { sale_confirm_stage = 1; economy_message = ""; }
+        }
+        if ((keyboard_check_pressed(ord("S")) || keyboard_check_pressed(vk_enter)) && pet_quantities[inventory_cursor] > 0) { sale_confirm_stage = 1; economy_message = ""; }
         break;
 
     case "mode":
         if (keyboard_check_pressed(ord("S"))) screen = "shop";
         if (keyboard_check_pressed(ord("B"))) {
-            tutorial = false;
-            play_mode = "bot";
-            load_setup_for_mode("bot");
-            screen = "setup";
+            if (array_length(owned_pet_ids) < 2) {
+                economy_message = "Own at least 2 different Battlepets before playing.";
+            } else {
+                tutorial = false;
+                play_mode = "bot";
+                load_setup_for_mode("bot");
+                economy_message = "";
+                screen = "setup";
+            }
         }
         if (keyboard_check_pressed(ord("L"))) {
-            tutorial = false;
-            play_mode = "local";
-            load_setup_for_mode("local");
-            screen = "setup";
+            if (array_length(owned_pet_ids) < 2) {
+                economy_message = "Own at least 2 different Battlepets before playing.";
+            } else {
+                tutorial = false;
+                play_mode = "local";
+                load_setup_for_mode("local");
+                economy_message = "";
+                screen = "setup";
+            }
         }
         break;
 
@@ -143,7 +269,9 @@ switch (screen) {
         if (_setup_changed) save_setup_for_mode(play_mode);
         if (play_mode == "bot" && keyboard_check_pressed(ord("C"))) open_collection("setup", -1);
         if (keyboard_check_pressed(vk_enter)) {
-            if (play_mode == "local") {
+            if (array_length(owned_pet_ids) < setup_team_size) {
+                economy_message = "You need " + string(setup_team_size) + " different Battlepets for this team size.";
+            } else if (play_mode == "local") {
                 prepare_local_roster();
                 screen = "local_roster";
             } else {
