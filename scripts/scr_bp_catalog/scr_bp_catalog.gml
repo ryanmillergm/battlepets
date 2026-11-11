@@ -1,4 +1,4 @@
-function bp_pet_definition(_id, _name, _rarity, _health, _basic_name, _basic_damage, _super_name, _super_damage, _tags, _sprite, _unblockable, _super_stun, _super_per_target_pet) {
+function bp_pet_definition(_id, _name, _rarity, _health, _basic_name, _basic_damage, _super_name, _super_damage, _tags, _sprite, _unblockable, _super_stun, _super_per_target_pet, _owner_only, _incoming_damage_chance) {
     return {
         id: _id,
         name: _name,
@@ -14,12 +14,15 @@ function bp_pet_definition(_id, _name, _rarity, _health, _basic_name, _basic_dam
             stun: is_undefined(_super_stun) ? 0 : _super_stun,
             per_target_pet: is_undefined(_super_per_target_pet) ? false : _super_per_target_pet
         },
-        ability: _unblockable ? "Quick: basic attacks cannot be blocked" : "None"
+        ability: _id == "ghost_axle" ? "Ghostability activates phasing: 70% of hostile damage attempts pass through" : (!is_undefined(_incoming_damage_chance) && _incoming_damage_chance < 100 ? "Ghost: hostile damage has only a " + string(_incoming_damage_chance) + "% chance to connect" : (_unblockable ? "Quick: basic attacks cannot be blocked" : "None")),
+        owner_only: is_undefined(_owner_only) ? false : _owner_only,
+        fixed_legendary_chance: (_id == "axle" || _id == "porcha_mercadies") ? 1.5 : 0,
+        incoming_damage_chance: is_undefined(_incoming_damage_chance) ? 100 : clamp(_incoming_damage_chance, 0, 100)
     };
 }
 
-function bp_pack_definition(_id, _name, _price, _maximum_rarity, _weights, _color) {
-    return { id: _id, name: _name, price: _price, maximum_rarity: _maximum_rarity, weights: _weights, color: _color };
+function bp_pack_definition(_id, _name, _price, _maximum_rarity, _weights, _color, _sprite) {
+    return { id: _id, name: _name, price: _price, maximum_rarity: _maximum_rarity, weights: _weights, color: _color, sprite: _sprite };
 }
 
 function bp_pack_roll_rarity(_pack, _roll) {
@@ -52,7 +55,8 @@ function bp_catalog_create() {
         bp_pet_definition("jack", "Jack", 2, 140, "Bump", 12, "Rockslide", 30, ["stone"], Sprite9, false),
         bp_pet_definition("axle", "Axle", 3, 130, "Tail Whip", 45, "Multistrike", 40, ["dog", "fur"], Axle, false, 0, true),
         bp_pet_definition("whisk", "Whisk (Placeholder)", 1, 78, "Swipe", 19, "Nine Lives", 35, ["cat", "fur"], -1, true),
-        bp_pet_definition("sprout", "Sprout (Placeholder)", 0, 115, "Seed Pop", 14, "Bloom Blast", 32, ["plant"], -1, false)
+        bp_pet_definition("sprout", "Sprout (Placeholder)", 0, 115, "Seed Pop", 14, "Bloom Blast", 32, ["plant"], -1, false),
+        bp_pet_definition("ghost_axle", "Ghost Axle", 4, 150, "InvisiCrunch", 50, "Ghostability", 70, ["dog", "ghost", "fur"], GhostAxle, false, 0, false, true, 100)
     ];
 
     var _cards = [
@@ -64,10 +68,10 @@ function bp_catalog_create() {
     ];
 
     var _packs = [
-        bp_pack_definition("basic", "Basic Battlepet Pack", 30, 0, [100, 0, 0, 0], make_color_rgb(95, 170, 105)),
-        bp_pack_definition("uncommon", "Uncommon Battlepet Pack", 50, 1, [45, 55, 0, 0], make_color_rgb(70, 145, 220)),
-        bp_pack_definition("epic", "Epic Battlepet Pack", 75, 2, [25, 45, 30, 0], make_color_rgb(155, 85, 205)),
-        bp_pack_definition("legendary", "Legendary Battlepet Pack", 100, 3, [25, 40, 30, 5], make_color_rgb(220, 155, 35))
+        bp_pack_definition("basic", "Basic Battlepet Pack", 30, 0, [100, 0, 0, 0], make_color_rgb(95, 170, 105), Battlepetpack),
+        bp_pack_definition("uncommon", "Uncommon Battlepet Pack", 50, 1, [45, 55, 0, 0], make_color_rgb(70, 145, 220), uncommonbattlepetpack),
+        bp_pack_definition("epic", "Epic Battlepet Pack", 75, 2, [30, 50, 20, 0], make_color_rgb(155, 85, 205), Epicbattlepetpack_runtime),
+        bp_pack_definition("legendary", "Legendary Battlepet Pack", 100, 3, [25, 40, 32, 3], make_color_rgb(220, 155, 35), Legendarybattlepetpack)
     ];
 
     return { pets: _pets, cards: _cards, packs: _packs, version: 3 };

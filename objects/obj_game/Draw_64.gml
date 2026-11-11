@@ -10,12 +10,53 @@ var fit_text_scale = function(_text, _available_width, _maximum_scale) {
     return min(_maximum_scale, _available_width / max(1, string_width(_text)));
 };
 
+var draw_exalted_text = function(_x, _y, _text) {
+    draw_set_color(c_black);
+    draw_text(_x - 2, _y, _text);
+    draw_text(_x + 2, _y, _text);
+    draw_text(_x, _y - 2, _text);
+    draw_text(_x, _y + 2, _text);
+    draw_text(_x - 2, _y - 2, _text);
+    draw_text(_x + 2, _y - 2, _text);
+    draw_text(_x - 2, _y + 2, _text);
+    draw_text(_x + 2, _y + 2, _text);
+    draw_set_color(rarity_colors[4]);
+    draw_text(_x, _y, _text);
+};
+
+var draw_account_identity = function(_x, _y) {
+    draw_set_halign(fa_left);
+    draw_set_color(make_color_rgb(35, 48, 70));
+    draw_text_transformed(_x, _y, account_username, 1.15, 1.15, 0);
+    if (account_verified) {
+        var _badge_x = _x + string_width(account_username) * 1.15 + 19;
+        draw_set_color(make_color_rgb(45, 145, 245));
+        draw_circle(_badge_x, _y, 13, false);
+        draw_set_color(c_white);
+        draw_line_width(_badge_x - 7, _y, _badge_x - 2, _y + 6, 3);
+        draw_line_width(_badge_x - 2, _y + 6, _badge_x + 8, _y - 6, 3);
+    }
+    draw_set_halign(fa_center);
+};
+
 var draw_pet_sprite_fit = function(_sprite, _left, _top, _width, _height, _alpha) {
     if (_sprite == -1) return;
     var _bbox_left = sprite_get_bbox_left(_sprite);
     var _bbox_right = sprite_get_bbox_right(_sprite);
     var _bbox_top = sprite_get_bbox_top(_sprite);
     var _bbox_bottom = sprite_get_bbox_bottom(_sprite);
+    var _visible_width = max(1, _bbox_right - _bbox_left + 1);
+    var _visible_height = max(1, _bbox_bottom - _bbox_top + 1);
+    var _sprite_scale = min(_width / _visible_width, _height / _visible_height);
+    var _center_x = _left + _width * 0.5;
+    var _center_y = _top + _height * 0.5;
+    var _draw_x = _center_x - (_bbox_left + _bbox_right) * 0.5 * _sprite_scale;
+    var _draw_y = _center_y - (_bbox_top + _bbox_bottom) * 0.5 * _sprite_scale;
+    draw_sprite_ext(_sprite, 0, _draw_x, _draw_y, _sprite_scale, _sprite_scale, 0, c_white, _alpha);
+};
+
+var draw_pet_sprite_fit_bounds = function(_sprite, _left, _top, _width, _height, _alpha, _bbox_left, _bbox_top, _bbox_right, _bbox_bottom) {
+    if (_sprite == -1) return;
     var _visible_width = max(1, _bbox_right - _bbox_left + 1);
     var _visible_height = max(1, _bbox_bottom - _bbox_top + 1);
     var _sprite_scale = min(_width / _visible_width, _height / _visible_height);
@@ -46,8 +87,14 @@ if (screen == "pause") {
 
 if (screen == "main") {
     draw_clear(c_white);
+    draw_account_identity(35, 40);
+    if (title_font != -1) draw_set_font(title_font);
+    var _main_logo_scale = title_font == -1 ? fit_text_scale("BATTLEPETS", _gw - 230, 14) : min(1, (_gw - 230) / max(1, string_width("BATTLEPETS")));
+    draw_set_color(make_color_rgb(62, 45, 10));
+    draw_text_transformed(_gw * 0.5 + 5, 215, "BATTLEPETS", _main_logo_scale, _main_logo_scale, 0);
     draw_set_color(make_color_rgb(212, 160, 20));
-    draw_text_transformed(_gw * 0.5, 210, "BATTLEPETS", 3, 3, 0);
+    draw_text_transformed(_gw * 0.5, 210, "BATTLEPETS", _main_logo_scale, _main_logo_scale, 0);
+    draw_set_font(-1);
     draw_set_color(make_color_rgb(13, 20, 38));
     draw_text_transformed(_gw * 0.5, 390, "ENTER / SPACE  -  PLAY", 1.5, 1.5, 0);
     draw_text_transformed(_gw * 0.5, 460, "T  -  TUTORIAL", 1.5, 1.5, 0);
@@ -58,6 +105,7 @@ if (screen == "main") {
 
 if (screen == "hub") {
     draw_clear(c_white);
+    draw_account_identity(35, 40);
     draw_set_color(make_color_rgb(212, 160, 20));
     draw_text_transformed(_gw * 0.5, 130, "BATTLEPETS", 2.4, 2.4, 0);
     draw_set_halign(fa_right);
@@ -135,7 +183,12 @@ if (screen == "pack_shop") {
         draw_set_color(_pack.color);
         draw_rectangle(_pack_x, 280, _pack_x + 330, 300, false);
         draw_text_transformed(_pack_x + 165, 335, rarity_names[_pack.maximum_rarity], 1.45, 1.45, 0);
-        draw_pet_sprite_fit(Battlepetpack, _pack_x + 105, 375, 120, 95, 1);
+        if (_pack.id == "legendary") {
+            // Size from the rectangular pack body, not the decorative sparkles around it.
+            draw_pet_sprite_fit_bounds(_pack.sprite, _pack_x + 105, 375, 120, 95, 1, 69, 91, 118, 152);
+        } else {
+            draw_pet_sprite_fit(_pack.sprite, _pack_x + 105, 375, 120, 95, 1);
+        }
         draw_set_color(make_color_rgb(40, 52, 75));
         draw_text(_pack_x + 165, 500, "2 DIFFERENT PETS");
         draw_set_color(make_color_rgb(212, 160, 20));
@@ -164,10 +217,18 @@ if (screen == "pack_shop") {
                 draw_set_color(make_color_rgb(55, 68, 92));
                 draw_text(455, _odds_y, rarity_names[_odds_rarity] + ": " + string(_confirm_pack.weights[_odds_rarity]) + "% per draw");
                 var _pet_odds_text = "";
+                var _odds_ordinary_count = 0;
+                var _odds_fixed_total = 0;
+                for (var _odds_count_pet = 0; _odds_count_pet < array_length(catalog.pets); _odds_count_pet++) {
+                    var _odds_count_definition = catalog.pets[_odds_count_pet];
+                    if (_odds_count_definition.rarity != _odds_rarity || _odds_count_definition.owner_only) continue;
+                    if (_odds_count_definition.fixed_legendary_chance > 0) _odds_fixed_total += _odds_count_definition.fixed_legendary_chance; else _odds_ordinary_count += 1;
+                }
                 for (var _odds_pet = 0; _odds_pet < array_length(catalog.pets); _odds_pet++) {
-                    if (catalog.pets[_odds_pet].rarity == _odds_rarity) {
+                    if (catalog.pets[_odds_pet].rarity == _odds_rarity && !catalog.pets[_odds_pet].owner_only) {
                         if (_pet_odds_text != "") _pet_odds_text += ", ";
-                        _pet_odds_text += string_replace(catalog.pets[_odds_pet].name, " (Placeholder)", "") + " " + string_format(_confirm_pack.weights[_odds_rarity] * 0.5, 0, 1) + "%";
+                        var _display_pet_chance = catalog.pets[_odds_pet].fixed_legendary_chance > 0 ? catalog.pets[_odds_pet].fixed_legendary_chance : max(0, _confirm_pack.weights[_odds_rarity] - _odds_fixed_total) / max(1, _odds_ordinary_count);
+                        _pet_odds_text += string_replace(catalog.pets[_odds_pet].name, " (Placeholder)", "") + " " + string_format(_display_pet_chance, 0, 1) + "%";
                     }
                 }
                 draw_set_color(make_color_rgb(105, 115, 135));
@@ -208,25 +269,29 @@ if (screen == "inventory") {
     for (var _inventory_index = 0; _inventory_index < array_length(catalog.pets); _inventory_index++) {
         var _inventory_pet = catalog.pets[_inventory_index];
         var _inventory_x = 70 + (_inventory_index mod 4) * 380;
-        var _inventory_y = 225 + (_inventory_index div 4) * 270;
+        var _inventory_y = 225 + ((_inventory_index div 4) - inventory_scroll_row) * 270;
+        if (_inventory_y < 200 || _inventory_y > 500) continue;
         draw_set_color(_inventory_index == inventory_cursor ? make_color_rgb(220, 235, 230) : make_color_rgb(238, 242, 248));
         draw_roundrect(_inventory_x, _inventory_y, _inventory_x + 330, _inventory_y + 225, false);
         draw_pet_sprite_fit(_inventory_pet.sprite, _inventory_x + 15, _inventory_y + 35, 115, 120, pet_quantities[_inventory_index] > 0 ? 1 : 0.25);
         draw_set_halign(fa_left); draw_set_color(make_color_rgb(35, 48, 70));
         var _inventory_name = string_replace(_inventory_pet.name, " (Placeholder)", "");
         draw_text_transformed(_inventory_x + 145, _inventory_y + 40, _inventory_name, fit_text_scale(_inventory_name, 165, 1.05), fit_text_scale(_inventory_name, 165, 1.05), 0);
-        draw_set_color(catalog.packs[_inventory_pet.rarity].color); draw_text(_inventory_x + 145, _inventory_y + 85, rarity_names[_inventory_pet.rarity]);
+        if (_inventory_pet.rarity == 4) draw_exalted_text(_inventory_x + 145, _inventory_y + 85, rarity_names[_inventory_pet.rarity]); else { draw_set_color(rarity_colors[_inventory_pet.rarity]); draw_text(_inventory_x + 145, _inventory_y + 85, rarity_names[_inventory_pet.rarity]); }
         draw_set_color(make_color_rgb(65, 78, 100)); draw_text(_inventory_x + 145, _inventory_y + 125, "OWNED: " + string(pet_quantities[_inventory_index]));
-        draw_text(_inventory_x + 145, _inventory_y + 165, "SELL: " + string(rarity_sale_values[_inventory_pet.rarity]) + " COINS");
+        draw_text(_inventory_x + 145, _inventory_y + 165, (_inventory_pet.rarity == 4 ? "VALUE: " : "SELL: ") + string(pet_sale_value(_inventory_pet)) + " COINS");
         draw_set_halign(fa_center);
     }
-    draw_set_color(pet_quantities[inventory_cursor] > 0 ? make_color_rgb(80, 175, 135) : make_color_rgb(155, 165, 180)); draw_roundrect(620, 790, 980, 855, false);
-    draw_set_color(c_white); draw_text(800, 823, pet_quantities[inventory_cursor] > 0 ? "SELL SELECTED PET (S / ENTER)" : "NO COPY TO SELL");
+    draw_set_color(make_color_rgb(75, 88, 112)); draw_text(_gw * 0.5, 745, "MOUSE WHEEL - SCROLL COLLECTION");
+    draw_set_color(make_color_rgb(80, 175, 135)); draw_roundrect(1500, 250, 1575, 350, false); draw_roundrect(1500, 500, 1575, 600, false);
+    draw_set_color(c_white); draw_text_transformed(1538, 300, "UP", 1.05, 1.05, 0); draw_text_transformed(1538, 550, "DOWN", 0.85, 0.85, 0);
+    draw_set_color(can_sell_pet(inventory_cursor) ? make_color_rgb(80, 175, 135) : make_color_rgb(155, 165, 180)); draw_roundrect(620, 790, 980, 855, false);
+    draw_set_color(c_white); draw_text(800, 823, can_sell_pet(inventory_cursor) ? "SELL SELECTED PET (S / ENTER)" : (catalog.pets[inventory_cursor].rarity == 4 && pet_quantities[inventory_cursor] > 0 ? "EXALTED - NOT SELLABLE" : (catalog.pets[inventory_cursor].owner_only && pet_quantities[inventory_cursor] == 1 ? "SPECIAL OWNER COPY" : "NO COPY TO SELL")));
     if (economy_message != "") { draw_set_color(make_color_rgb(55, 115, 80)); draw_text(_gw * 0.5, 755, economy_message); }
     draw_set_color(make_color_rgb(75, 88, 112)); draw_text(150, 835, "ESC - Back");
     if (sale_confirm_stage > 0) {
         var _sale_pet = catalog.pets[inventory_cursor];
-        var _sale_value = rarity_sale_values[_sale_pet.rarity];
+        var _sale_value = pet_sale_value(_sale_pet);
         draw_set_alpha(0.82); draw_set_color(make_color_rgb(10, 16, 30)); draw_rectangle(0, 0, _gw, _gh, false); draw_set_alpha(1);
         draw_set_color(c_white); draw_roundrect(355, 180, 1245, 775, false);
         draw_set_color(make_color_rgb(40, 52, 75));
@@ -247,21 +312,152 @@ if (screen == "mode") {
     draw_set_color(make_color_rgb(212, 160, 20));
     draw_text_transformed(_gw - 35, 35, "BATTLE COINS: " + string(battle_coins), 1.25, 1.25, 0);
     draw_set_halign(fa_center);
-    draw_set_color(make_color_rgb(255, 210, 70));
-    draw_text_transformed(_gw * 0.32, 170, "CHOOSE PLAY MODE", 2, 2, 0);
-    draw_set_color(make_color_rgb(75, 175, 255));
-    draw_text_transformed(_gw * 0.32, 330, "B  -  BOTS", 1.5, 1.5, 0);
-    draw_set_color(make_color_rgb(110, 235, 155));
-    draw_text_transformed(_gw * 0.32, 420, "L  -  LOCAL (TAKE TURNS)", 1.5, 1.5, 0);
-    draw_set_color(make_color_rgb(0, 165, 175));
-    draw_text_transformed(_gw * 0.75, 170, "S  -  SHOP", 2, 2, 0);
-    draw_set_color(make_color_rgb(55, 115, 120));
-    draw_text_transformed(_gw * 0.75, 235, "Packs, Specialties, Pets", 1.1, 1.1, 0);
+    draw_set_color(make_color_rgb(105, 135, 180));
+    draw_text_transformed(_gw * 0.15, 170, "S  -  SETTINGS", 1.65, 1.65, 0);
     draw_set_color(make_color_rgb(95, 108, 132));
-    draw_text_transformed(_gw * 0.32, 510, "ONLINE  -  COMING IN M3", 1.25, 1.25, 0);
+    draw_text_transformed(_gw * 0.15, 235, "COMING SOON", 1.15, 1.15, 0);
+    draw_set_color(make_color_rgb(255, 210, 70));
+    draw_text_transformed(_gw * 0.5, 170, "CHOOSE PLAY MODE", 2, 2, 0);
+    draw_set_color(make_color_rgb(75, 175, 255));
+    draw_text_transformed(_gw * 0.5, 330, "B  -  BOTS", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(110, 235, 155));
+    draw_text_transformed(_gw * 0.5, 420, "L  -  LOCAL (TAKE TURNS)", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(25, 155, 85));
+    draw_text_transformed(_gw * 0.85, 170, "T  -  TRADING", 1.65, 1.65, 0);
+    draw_set_color(make_color_rgb(55, 125, 85));
+    draw_text_ext_transformed(_gw * 0.85, 235, "Trade Battlepets with other players", 20, 360, 1.05, 1.05, 0);
+    draw_set_color(make_color_rgb(95, 108, 132));
+    draw_text_transformed(_gw * 0.5, 510, "ONLINE  -  COMING IN M3", 1.25, 1.25, 0);
     draw_set_color(make_color_rgb(13, 20, 38));
-    draw_text(_gw * 0.32, 650, "ESC - Back");
+    draw_text(_gw * 0.5, 650, "ESC - Back");
     if (economy_message != "") { draw_set_color(make_color_rgb(195, 55, 55)); draw_text(_gw * 0.5, 735, economy_message); }
+    exit;
+}
+
+if (screen == "trading") {
+    draw_clear(make_color_rgb(10, 54, 38));
+    draw_set_halign(fa_center);
+    draw_set_color(make_color_rgb(135, 235, 175));
+    draw_text_transformed(_gw * 0.5, 130, "TRADING", 2.4, 2.4, 0);
+    draw_set_color(make_color_rgb(195, 235, 210));
+    draw_text(_gw * 0.5, 195, "Choose how you want to trade Battlepets");
+
+    var _trading_names = ["TRADE UP", "PLAYER TRADING"];
+    var _trading_descriptions = ["Exchange extra Battlepets toward a higher-tier pet.", "Trade Battlepets directly with another player."];
+    for (var _trading_index = 0; _trading_index < 2; _trading_index++) {
+        var _trading_x = 220 + _trading_index * 630;
+        draw_set_color(_trading_index == trading_cursor ? make_color_rgb(72, 170, 112) : make_color_rgb(30, 105, 72));
+        draw_roundrect(_trading_x, 285, _trading_x + 530, 585, false);
+        draw_set_color(_trading_index == trading_cursor ? make_color_rgb(175, 255, 205) : make_color_rgb(105, 205, 145));
+        draw_rectangle(_trading_x, 285, _trading_x + 530, 305, false);
+        draw_set_color(c_white);
+        draw_text_transformed(_trading_x + 265, 370, _trading_names[_trading_index], 1.65, 1.65, 0);
+        draw_set_color(make_color_rgb(215, 240, 225));
+        draw_text_ext(_trading_x + 265, 455, _trading_descriptions[_trading_index], 20, 440);
+        if (_trading_index == 1) {
+            draw_set_color(make_color_rgb(145, 220, 175));
+            draw_text(_trading_x + 265, 545, "COMING IN M4");
+        }
+    }
+
+    if (economy_message != "") {
+        draw_set_color(make_color_rgb(175, 255, 205));
+        draw_text_transformed(_gw * 0.5, 680, economy_message, 1.15, 1.15, 0);
+    }
+    draw_set_color(make_color_rgb(195, 235, 210));
+    draw_text(_gw * 0.5, 790, "LEFT / RIGHT + ENTER, or left-click an option    |    ESC - Back to Play");
+    exit;
+}
+
+if (screen == "trade_up") {
+    draw_clear(make_color_rgb(10, 54, 38));
+    draw_set_halign(fa_center);
+    draw_set_color(make_color_rgb(135, 235, 175));
+    draw_text_transformed(_gw * 0.5, 95, "TRADE UP", 2.4, 2.4, 0);
+    draw_set_color(make_color_rgb(215, 240, 225));
+    draw_text(_gw * 0.5, 155, "Trade 3 Battlepets of one rarity for 1 random Battlepet of the next rarity");
+
+    for (var _trade_up_index = 0; _trade_up_index < 3; _trade_up_index++) {
+        var _trade_up_x = 95 + _trade_up_index * 505;
+        var _trade_up_owned = trade_up_owned_count(_trade_up_index);
+        draw_set_color(_trade_up_index == trade_up_cursor ? make_color_rgb(72, 170, 112) : make_color_rgb(30, 105, 72));
+        draw_roundrect(_trade_up_x, 285, _trade_up_x + 400, 585, false);
+        draw_set_color(catalog.packs[_trade_up_index].color);
+        draw_rectangle(_trade_up_x, 285, _trade_up_x + 400, 305, false);
+        draw_set_color(c_white);
+        draw_text_transformed(_trade_up_x + 200, 350, string_upper(rarity_names[_trade_up_index]), 1.45, 1.45, 0);
+        draw_set_color(make_color_rgb(215, 240, 225));
+        draw_text_transformed(_trade_up_x + 200, 415, "3  ->  1", 1.8, 1.8, 0);
+        draw_set_color(catalog.packs[_trade_up_index + 1].color);
+        draw_text_transformed(_trade_up_x + 200, 475, string_upper(rarity_names[_trade_up_index + 1]), 1.35, 1.35, 0);
+        draw_set_color(_trade_up_owned >= 3 ? make_color_rgb(175, 255, 205) : make_color_rgb(245, 170, 145));
+        draw_text(_trade_up_x + 200, 545, "OWNED: " + string(_trade_up_owned) + " / 3");
+    }
+
+    if (economy_message != "") {
+        draw_set_color(make_color_rgb(175, 255, 205));
+        draw_text_transformed(_gw * 0.5, 665, economy_message, 1.15, 1.15, 0);
+    }
+    draw_set_color(make_color_rgb(195, 235, 210));
+    draw_text(_gw * 0.5, 790, "LEFT / RIGHT + ENTER, or left-click a rarity    |    ESC - Back to Trading");
+
+    exit;
+}
+
+if (screen == "trade_up_select") {
+    draw_clear(make_color_rgb(10, 54, 38));
+    draw_set_halign(fa_center);
+    draw_set_color(make_color_rgb(135, 235, 175));
+    draw_text_transformed(_gw * 0.5, 75, "CHOOSE 3 " + string_upper(rarity_names[trade_up_cursor]) + " BATTLEPETS", 1.9, 1.9, 0);
+    draw_set_color(make_color_rgb(215, 240, 225));
+    draw_text(_gw * 0.5, 135, "Selected: " + string(trade_up_selected_total()) + " / 3");
+    var _trade_draw_slot = 0;
+    for (var _trade_draw_index = 0; _trade_draw_index < array_length(catalog.pets); _trade_draw_index++) {
+        if (catalog.pets[_trade_draw_index].rarity == trade_up_cursor) {
+            var _trade_draw_pet = catalog.pets[_trade_draw_index];
+            var _trade_draw_x = 300 + _trade_draw_slot * 600;
+            draw_set_color(_trade_draw_index == trade_up_pet_cursor ? make_color_rgb(72, 170, 112) : make_color_rgb(30, 105, 72));
+            draw_roundrect(_trade_draw_x, 245, _trade_draw_x + 400, 610, false);
+            draw_set_color(c_white);
+            draw_roundrect(_trade_draw_x + 85, 285, _trade_draw_x + 315, 470, false);
+            draw_pet_sprite_fit(_trade_draw_pet.sprite, _trade_draw_x + 95, 295, 210, 165, 1);
+            draw_set_color(c_white);
+            draw_text_transformed(_trade_draw_x + 200, 510, string_replace(_trade_draw_pet.name, " (Placeholder)", ""), 1.3, 1.3, 0);
+            draw_set_color(make_color_rgb(175, 255, 205));
+            draw_text(_trade_draw_x + 200, 555, "OWNED: " + string(pet_quantities[_trade_draw_index]) + "    SELECTED: " + string(trade_up_selected_counts[_trade_draw_index]));
+            _trade_draw_slot += 1;
+        }
+    }
+    if (economy_message != "") { draw_set_color(make_color_rgb(245, 170, 145)); draw_text(_gw * 0.5, 675, economy_message); }
+    draw_set_color(make_color_rgb(195, 235, 210));
+    draw_text(_gw * 0.5, 750, "LEFT CLICK / SPACE - ADD    RIGHT CLICK / R - REMOVE    ENTER - CONTINUE");
+    draw_text(_gw * 0.5, 805, "LEFT / RIGHT - CHOOSE PET    |    ESC - Back");
+    if (trade_up_confirm) {
+        draw_set_alpha(0.88); draw_set_color(make_color_rgb(4, 25, 17)); draw_rectangle(0, 0, _gw, _gh, false); draw_set_alpha(1);
+        draw_set_color(c_white); draw_roundrect(355, 220, 1245, 680, false);
+        draw_set_color(make_color_rgb(25, 155, 85)); draw_text_transformed(_gw * 0.5, 300, "CONFIRM TRADE UP", 1.9, 1.9, 0);
+        draw_set_color(make_color_rgb(40, 70, 55));
+        draw_text_transformed(_gw * 0.5, 400, "Trade these 3 pets for 1 random " + rarity_names[trade_up_cursor + 1] + " Battlepet?", 1.2, 1.2, 0);
+        draw_set_color(make_color_rgb(175, 65, 65)); draw_text(_gw * 0.5, 500, "Consumed last copies will be removed from saved lineups.");
+        draw_set_color(make_color_rgb(25, 155, 85)); draw_text_transformed(_gw * 0.5, 600, "ENTER - CONFIRM    C - CANCEL", 1.25, 1.25, 0);
+    }
+    exit;
+}
+
+if (screen == "trade_up_reward") {
+    draw_clear(c_white);
+    draw_set_halign(fa_center);
+    draw_set_color(make_color_rgb(212, 160, 20));
+    draw_text_transformed(_gw * 0.5, 120, "TRADE UP COMPLETE!", 2.2, 2.2, 0);
+    if (trade_up_reward_index >= 0) {
+        var _trade_reward_pet = catalog.pets[trade_up_reward_index];
+        draw_set_color(make_color_rgb(238, 242, 248)); draw_roundrect(510, 220, 1090, 680, false);
+        draw_set_color(c_white); draw_roundrect(650, 275, 950, 520, false);
+        draw_pet_sprite_fit(_trade_reward_pet.sprite, 665, 290, 270, 215, 1);
+        draw_set_color(make_color_rgb(35, 48, 70)); draw_text_transformed(_gw * 0.5, 575, string_replace(_trade_reward_pet.name, " (Placeholder)", ""), 1.75, 1.75, 0);
+        if (_trade_reward_pet.rarity == 4) draw_exalted_text(_gw * 0.5, 630, string_upper(rarity_names[_trade_reward_pet.rarity])); else { draw_set_color(rarity_colors[_trade_reward_pet.rarity]); draw_text_transformed(_gw * 0.5, 630, string_upper(rarity_names[_trade_reward_pet.rarity]), 1.2, 1.2, 0); }
+    }
+    draw_set_color(make_color_rgb(75, 88, 112)); draw_text(_gw * 0.5, 790, "ENTER / SPACE or left-click to continue");
     exit;
 }
 
@@ -311,7 +507,8 @@ if (screen == "collection") {
     var _collection_start_x = (_gw - (4 * _collection_card_width + 3 * _collection_gap_x)) * 0.5;
     for (var _collection_slot = 0; _collection_slot < collection_slot_count; _collection_slot++) {
         var _collection_x = _collection_start_x + (_collection_slot mod 4) * (_collection_card_width + _collection_gap_x);
-        var _collection_y = 145 + (_collection_slot div 4) * (_collection_card_height + _collection_gap_y);
+        var _collection_y = 145 + ((_collection_slot div 4) - collection_scroll_row) * (_collection_card_height + _collection_gap_y);
+        if (_collection_y < 130 || _collection_y > 570) continue;
         var _collection_owned = _collection_slot < array_length(owned_pet_ids);
         var _collection_focused = _collection_slot == collection_cursor;
         var _collection_selected_number = 0;
@@ -354,14 +551,14 @@ if (screen == "collection") {
             var _collection_name_scale = fit_text_scale(_collection_name, _collection_text_width, 1.15);
             draw_text_transformed(_collection_x + 130, _collection_y + 22, _collection_name, _collection_name_scale, _collection_name_scale, 0);
             draw_set_halign(fa_right);
-            draw_set_color(catalog.packs[_collection_pet.rarity].color);
-            draw_text_transformed(_collection_x + _collection_card_width - 12, _collection_y + 22, "x" + string(pet_quantities[catalog_pet_index_by_id(_collection_pet.id)]), 0.9, 0.9, 0);
+            var _collection_quantity_text = "x" + string(pet_quantities[catalog_pet_index_by_id(_collection_pet.id)]);
+            if (_collection_pet.rarity == 4) draw_exalted_text(_collection_x + _collection_card_width - 12, _collection_y + 22, _collection_quantity_text); else { draw_set_color(rarity_colors[_collection_pet.rarity]); draw_text_transformed(_collection_x + _collection_card_width - 12, _collection_y + 22, _collection_quantity_text, 0.9, 0.9, 0); }
             draw_set_halign(fa_left);
             draw_set_color(make_color_rgb(75, 88, 112));
             var _collection_health_text = "HEALTH  " + string(_collection_pet.max_health);
             var _collection_basic_text = "BASIC   " + _collection_pet.basic.name + "  " + string(_collection_pet.basic.damage);
             var _collection_super_damage = _collection_pet.super.per_target_pet ? string(_collection_pet.super.damage) + " x opposing pets" : string(_collection_pet.super.damage);
-            var _collection_super_text = "SUPER   " + _collection_pet.super.name + "  " + _collection_super_damage + (_collection_pet.super.stun > 0 ? " + STUN" : "");
+            var _collection_super_text = "SUPER   " + _collection_pet.super.name + "  " + _collection_super_damage + (_collection_pet.id == "ghost_axle" ? " + 70% PHASE" : "") + (_collection_pet.super.stun > 0 ? " + STUN" : "");
             var _collection_tags_text = "TAGS    " + string(_collection_pet.tags);
             var _collection_health_scale = fit_text_scale(_collection_health_text, _collection_text_width, 1);
             var _collection_basic_scale = fit_text_scale(_collection_basic_text, _collection_text_width, 1);
@@ -385,8 +582,10 @@ if (screen == "collection") {
     }
 
     draw_set_halign(fa_center);
+    draw_set_color(make_color_rgb(25, 155, 85)); draw_roundrect(1500, 210, 1575, 310, false); draw_roundrect(1500, 470, 1575, 570, false);
+    draw_set_color(c_white); draw_text_transformed(1538, 260, "UP", 1.05, 1.05, 0); draw_text_transformed(1538, 520, "DOWN", 0.85, 0.85, 0);
     draw_set_color(make_color_rgb(13, 20, 38));
-    draw_text(_gw * 0.5, 790, "ARROWS - MOVE    SPACE - ADD / REMOVE PET    ENTER - CONFIRM TEAM");
+    draw_text(_gw * 0.5, 790, "ARROWS / MOUSE WHEEL - MOVE    CLICK / SPACE - ADD OR REMOVE    ENTER - CONFIRM TEAM");
     draw_set_color(array_length(collection_selected_ids) == setup_team_size ? make_color_rgb(25, 155, 85) : make_color_rgb(190, 80, 65));
     draw_text(_gw * 0.5, 835, array_length(collection_selected_ids) == setup_team_size ? "TEAM READY" : "SELECT EXACTLY " + string(setup_team_size) + " PETS");
     draw_set_color(make_color_rgb(75, 88, 112));
@@ -566,6 +765,7 @@ if (screen == "battle") {
                 var _compact_super_text = "2 " + _pet.definition.super.name + "  " + _compact_super_damage + (_pet.definition.super.stun > 0 ? " +STUN" : "");
                 var _compact_super_scale = fit_text_scale(_compact_super_text, _compact_text_width, 0.76);
                 draw_text_transformed(_cx + 57, _cy + 46, _compact_super_text, _compact_super_scale, _compact_super_scale, 0);
+                if (_pet.ghostability_active) { draw_set_color(make_color_rgb(205, 240, 255)); draw_text_transformed(_cx + 57, _cy + 62, "PHASING ACTIVE", 0.62, 0.62, 0); }
                 draw_set_color(make_color_rgb(35, 35, 45));
                 draw_rectangle(_cx + 7, _cy + 68, _cx + _card_width - 7, _cy + 80, false);
                 draw_set_color(_pet.health > _pet.definition.max_health * 0.35 ? make_color_rgb(80, 220, 120) : make_color_rgb(235, 80, 75));
@@ -599,6 +799,7 @@ if (screen == "battle") {
                 var _tall_super_text = "2 " + _pet.definition.super.name + "  " + _tall_super_damage + (_pet.definition.super.stun > 0 ? " + STUN" : "");
                 var _tall_super_scale = fit_text_scale(_tall_super_text, _card_width - 14, 1);
                 draw_text_transformed(_cx + _card_width * 0.5, _cy + 130, _tall_super_text, _tall_super_scale, _tall_super_scale, 0);
+                if (_pet.ghostability_active) { draw_set_color(make_color_rgb(205, 240, 255)); draw_text_transformed(_cx + _card_width * 0.5, _cy + 146, "PHASING ACTIVE - 70% AVOID", 0.65, 0.65, 0); }
                 draw_set_color(make_color_rgb(35, 35, 45));
                 draw_rectangle(_cx + 7, _cy + 154, _cx + _card_width - 7, _cy + 168, false);
                 draw_set_color(_pet.health > _pet.definition.max_health * 0.35 ? make_color_rgb(80, 220, 120) : make_color_rgb(235, 80, 75));
@@ -628,7 +829,7 @@ if (screen == "battle") {
                 if (_selected_pet.definition.super.per_target_pet && selected_target >= 0) {
                     _selected_super_damage *= bp_player_living_pet_count(match.players[selected_target div _team_size]);
                 }
-                _selection_text = _selected_pet.definition.super.name + " - " + string(_selected_super_damage + _selected_pet.attack_bonus) + " damage" + (_selected_pet.definition.super.per_target_pet ? " (40 x living opposing pets)" : "") + (_selected_pet.definition.super.stun > 0 ? " + stun next turn" : "");
+                _selection_text = _selected_pet.definition.super.name + " - " + string(_selected_super_damage + _selected_pet.attack_bonus) + " damage" + (_selected_pet.definition.id == "ghost_axle" ? " + activates 70% hostile-damage phasing" : "") + (_selected_pet.definition.super.per_target_pet ? " (40 x living opposing pets)" : "") + (_selected_pet.definition.super.stun > 0 ? " + stun next turn" : "");
             } else {
                 _selection_text = _selected_pet.definition.basic.name + " - " + string(_selected_pet.definition.basic.damage + _selected_pet.attack_bonus) + " damage";
             }
@@ -706,7 +907,11 @@ if (screen == "battle") {
         draw_text(_gw * 0.5, 335, "Health: " + string(_detail_pet.health) + "/" + string(_detail_pet.definition.max_health) + "    Tags: " + string(_detail_pet.definition.tags));
         draw_text_transformed(_gw * 0.5, 395, "BASIC - " + _detail_pet.definition.basic.name + " - " + string(_detail_pet.definition.basic.damage + _detail_pet.attack_bonus) + " damage", 1.35, 1.35, 0);
         var _detail_super_damage = _detail_pet.definition.super.per_target_pet ? string(_detail_pet.definition.super.damage) + " x TARGET'S LIVING PETS" : string(_detail_pet.definition.super.damage + _detail_pet.attack_bonus) + " damage";
-        draw_text_transformed(_gw * 0.5, 450, "SUPER - " + _detail_pet.definition.super.name + " - " + _detail_super_damage + (_detail_pet.definition.super.stun > 0 ? " + STUN NEXT TURN" : "") + (_detail_pet.super_used ? " (USED)" : " (ONCE PER MATCH)"), 1.35, 1.35, 0);
+        var _detail_super_effect = _detail_pet.definition.id == "ghost_axle" ? " + ACTIVATES 70% PHASING" : "";
+        var _detail_super_text = "SUPER - " + _detail_pet.definition.super.name + " - " + _detail_super_damage + _detail_super_effect + (_detail_pet.definition.super.stun > 0 ? " + STUN NEXT TURN" : "") + (_detail_pet.super_used ? " (USED)" : " (ONCE PER MATCH)");
+        var _detail_super_scale = fit_text_scale(_detail_super_text, 650, 1.35);
+        draw_text_transformed(_gw * 0.5, 450, _detail_super_text, _detail_super_scale, _detail_super_scale, 0);
+        if (_detail_pet.ghostability_active) { draw_set_color(make_color_rgb(205, 240, 255)); draw_text(_gw * 0.5, 485, "PHASING ACTIVE: 70% chance hostile damage does nothing"); }
         draw_set_color(make_color_rgb(180, 235, 205));
         draw_text_ext(_gw * 0.5, 515, "ABILITY: " + _detail_pet.definition.ability, 18, 620);
         draw_set_color(make_color_rgb(225, 205, 240));

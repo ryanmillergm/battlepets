@@ -30,8 +30,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"Adminbattlepetpack",
-    "path":"sprites/Adminbattlepetpack/Adminbattlepetpack.yy",
+    "name":"OGbattlepetpack",
+    "path":"sprites/OGbattlepetpack/OGbattlepetpack.yy",
   },
   "spriteMaskId":null,
   "visible":true,

@@ -20,6 +20,9 @@ function bp_run_self_tests(_catalog) {
         _passed = bp_test_check(bp_pack_roll_rarity(_catalog.packs[_pack_test], 0) <= _catalog.packs[_pack_test].maximum_rarity, "pack minimum roll respects tier") && _passed;
         _passed = bp_test_check(bp_pack_roll_rarity(_catalog.packs[_pack_test], 99) <= _catalog.packs[_pack_test].maximum_rarity, "pack maximum roll respects tier") && _passed;
     }
+    _passed = bp_test_check(_catalog.packs[3].weights[3] == 3, "Legendary pack has 3 percent total for Axle and Porcha & Mercadies") && _passed;
+    _passed = bp_test_check(_catalog.pets[1].fixed_legendary_chance == 1.5 && _catalog.pets[5].fixed_legendary_chance == 1.5, "Axle and Porcha & Mercadies stay fixed at 1.5 percent") && _passed;
+    _passed = bp_test_check(_catalog.packs[2].weights[2] == 20, "Epic pack gives Bailly and Jack 10 percent each") && _passed;
 
     for (var _players = 2; _players <= 8; _players++) {
         for (var _team_size = 2; _team_size <= 4; _team_size++) {
@@ -63,6 +66,23 @@ function bp_run_self_tests(_catalog) {
     _multi_match.players[1].pets[3].health = 0;
     var _multi_acted = bp_apply_action(_multi_match, 0, 0, "super", 1, 0);
     _passed = bp_test_check(_multi_acted && _multi_match.players[1].pets[0].health == 380, "Axle Multistrike deals 40 per living opposing pet") && _passed;
+
+    var _ghost_match = bp_match_create(_catalog, ["Ghost Owner", "Opponent"], [false, false], 2, 0);
+    _ghost_match.order = [0, 1];
+    _ghost_match.order_index = 0;
+    _ghost_match.players[0].pets[0] = bp_pet_state_create(_catalog.pets[array_length(_catalog.pets) - 1]);
+    var _ghost_target_health = _ghost_match.players[1].pets[0].health;
+    var _ghost_acted = bp_apply_action(_ghost_match, 0, 0, "super", 1, 0);
+    _passed = bp_test_check(_ghost_acted && _ghost_match.players[0].pets[0].ghostability_active, "Ghostability activates phasing") && _passed;
+    _passed = bp_test_check(_ghost_target_health - _ghost_match.players[1].pets[0].health == 70, "Ghostability deals 70 damage") && _passed;
+    var _ghost_avoids = 0;
+    random_set_seed(5030934);
+    for (var _ghost_roll = 0; _ghost_roll < 100; _ghost_roll++) {
+        var _ghost_state = _ghost_match.players[0].pets[0];
+        _ghost_state.health = _ghost_state.definition.max_health;
+        if (bp_damage_pet(_ghost_state, 10, false) == 0 && _ghost_state.damage_avoided) _ghost_avoids += 1;
+    }
+    _passed = bp_test_check(_ghost_avoids >= 55 && _ghost_avoids <= 85, "Ghostability avoids approximately 70 percent of hostile damage") && _passed;
 
     var _ai_match = bp_match_create(_catalog, ["Bot", "Low", "High", "Already"], [true, false, false, false], 2, 0);
     var _ai_player = bp_current_player_index(_ai_match);

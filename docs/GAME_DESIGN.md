@@ -80,13 +80,19 @@ Bot matches offer Relaxed, Normal, and Quick turn-presentation speeds. This sett
 
 ## Collection and shop
 
-- After the title screen, the main hub presents Inventory, Play, and Shop. Play opens the Bot/Local choices. Shop opens with `S`; its PET PACKS card opens with `P` or a left click.
+- After the title screen, the main hub presents Inventory, Play, and Shop. Play centers the Bot, Local, and planned Online modes, with a planned Settings entry on the left and green Trading entry on the right. Settings currently reports that it is coming soon. Trading opens a dark-green submenu with planned Trade Up and Player Trading choices; selecting either reports that it is coming in M4. The separate main-hub Shop opens with `S`; its PET PACKS card opens with `P` or a left click.
 - The local development pack shop sells Basic (30 coins), Uncommon (50), Epic (75), and Legendary (100) packs. Each contains two different pets and displays its exact rarity and per-pet draw odds before confirmation.
+- Each Epic pack draw has a 10% chance for Bailly and a 10% chance for Jack (20% Epic total), with 30% Basic and 50% Uncommon chances.
+- Each Legendary pack draw has a 1.5% chance for Axle and a 1.5% chance for Porcha & Mercadies (3% Legendary total in the current catalog). Pack and Epic-to-Legendary Trade Up selection preserve these fixed rare-pet chances once less-rare Legendary pets are added; ordinary Legendary pets share the remaining probability.
 - Inventory persists owned copy quantities. Any copy may be sold after two confirmations for 5/10/20/30 coins at Basic/Uncommon/Epic/Legendary rarity; selling the last copy removes that pet from available lineups.
 - Bot setup opens Collection with `C`; Local opens it with `C` on each selected roster seat. The collection shows owned pets in stat cards plus empty future slots. Players select exactly the configured team size with no duplicate definitions. Bot mode applies the lineup to Player 1; Local mode stores a separate lineup for every configured seat. The same screen is intended for the registered profile in Online mode.
 - New profiles choose one admin-designated starter.
 - Packs contain two random pets and publish exact rarity and per-pet odds.
 - Direct pet purchases and packs use Battle Coins.
 - Duplicate copies are owned as quantities but cannot appear twice in one lineup.
+- Ghost Axle is an owner-only Exalted Battlepet with a white/light-blue rarity treatment, guaranteed in the development owner's local collection and excluded from packs, Trade Up rewards, and random bot teams. It has 150 health and InvisiCrunch for 50 damage. Its once-per-match Ghostability super deals 70 damage to any opposing pet and activates its phasing defense for the rest of the match: opponents may still target Ghost Axle, but each hostile damage attempt has a 70% chance to pass through for no damage and a 30% chance to connect.
+- Exalted Battlepets are exceptionally rare and are awarded primarily through skill-based hosted game events or approved special cases. They cannot be obtained from ordinary packs or Trade Ups, and no Exalted Battlepet can be sold. Ghost Axle retains a displayed value of 1,400 Battle Coins without being sellable.
+- The development owner profile uses the reserved username `Glitch` and displays a blue verified checkmark. Verification is tied to the internal owner account ID, not to matching display-name text, so other users named Glitch do not receive the badge.
+- Trade Up lets the player choose exactly three owned copies from one rarity, then exchanges them for one random pet from the next rarity: Basic to Uncommon, Uncommon to Epic, or Epic to Legendary. Consumed last copies are removed from saved lineups, and the received pet is revealed on a dedicated result screen.
 - A user may redeem surplus copies for an admin-configured coin fraction or exchange recipe.
 - Earned and purchased currency are tracked separately.
