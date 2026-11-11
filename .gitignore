@@ -64,6 +64,11 @@ Temporary Items
 # Local GameMaker command-line build output
 /.build/
 
+# Local recovery archives and generated pack previews
+/backups/
+/tmp/preview-*.png
+/tmp/imagegen/legendary-pack-*.png
+
 # Node/TypeScript local output and secrets
 **/node_modules/
 **/dist/

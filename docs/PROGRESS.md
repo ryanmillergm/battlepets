@@ -5,14 +5,24 @@
 - [x] Replaced the Ripple placeholder with Axle and assigned the `Axle` sprite asset.
 - [x] Set Axle to 130 health, `Tail Whip` at 45 damage, and the once-per-match `Multistrike` super at 40 damage per living pet on the targeted opponent's team.
 - [x] Added dynamic Multistrike damage calculation, visible multiplier explanations, and a self-test covering a three-pet target team for 120 attempted damage.
+- [x] Added owner-only Exalted Ghost Axle with guaranteed local ownership, black-outlined white/light-blue rarity treatment, 150 health, 50-damage InvisiCrunch, and 70-damage Ghostability that activates 70% hostile-damage avoidance while preserving legal targeting; excluded it from rewards and bot teams.
+- [x] Defined Exalted pets as skill-event/special-case rewards, made the entire rarity unsellable, and gave Ghost Axle a displayed 1,400 Battle Coin value.
+- [x] Added the reserved Glitch owner identity with an owner-ID-controlled verified checkmark on the title and main hub for local account testing.
+- [x] Enlarged the gold BATTLEPETS main-menu logo across most of the screen with a dark offset shadow, then replaced stretched default lettering with a slightly smaller native-resolution bold title font for sharper rendering.
+- [x] Added mouse-wheel row scrolling to Inventory and choose-pets collection screens without off-screen keyboard focus overriding the wheel position.
 
 ## Local pack and inventory economy
 
 - [x] Added four priced, tier-capped Battlepet packs with published draw odds and two different rewards.
+- [x] Set fixed rare Legendary odds to 1.5% for Axle and 1.5% for Porcha & Mercadies in packs and the future expanded Trade Up pool.
+- [x] Set Epic pack odds to 10% for Bailly and 10% for Jack per draw (20% Epic total, 30% Basic, and 50% Uncommon).
 - [x] Added persistent pet quantities, pack purchase confirmations/results, and Battle Coin deductions.
 - [x] Added Inventory with duplicate counts, two-step selling, lineup cleanup, and rarity-based coin returns.
 - [x] Added the Inventory / Play / Shop hub plus keyboard and mouse pack navigation.
-- [x] Replaced the redundant Shop link inside the Play submenu with a green planned Trading entry and M4 placeholder feedback.
+- [x] Replaced the redundant Shop link inside Play with a green Trading entry and added a dark-green submenu for planned Trade Up and Player Trading flows with keyboard and mouse selection.
+- [x] Centered the Play submenu's game modes and added a left-side planned Settings entry with keyboard and mouse feedback.
+- [x] Implemented persistent Trade Up exchanges with player-selected same-rarity copies, confirmation, lineup cleanup, and a white reward-reveal screen.
+- [-] Added left-click support across the title, menus, setup, roster, collection, transitions, pause, results, Shop, Inventory, Trading, and battle selection/action flows; hands-on full mouse-only verification remains.
 
 ## Status legend
 
@@ -57,6 +67,9 @@
 - [x] GameMaker Windows build and startup smoke test completed; runtime reported `BATTLEPETS SELF-TESTS PASSED`.
 - [x] Added a main-menu-only `FULLSCREEN` / `WINDOWED` button, retained `F11` and `Alt+Enter` shortcuts, rebuilt and installed the Windows game, and manually confirmed true fullscreen switching on August 11, 2026.
 - [x] Added the white-and-gold `BP` Windows application icon source, PNG preview, and ICO asset for desktop shortcuts and packaged installs on August 11, 2026.
+- [x] Added a thicker square black border directly against the outside of the Windows application and Desktop icon, with brighter high-contrast gold `BP` lettering.
+- [x] Softened the icon's bright gold slightly and added a thin black outline around the `BP` letters for clarity.
+- [x] Strengthened the `BP` lettering to a complete black outline and generated a multi-resolution Windows ICO for sharper scaling.
 - [x] Server TypeScript build completed successfully.
 - [x] Server battle tests passed (4 tests).
 - [x] Prisma client generation completed successfully.

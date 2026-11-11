@@ -5,7 +5,9 @@ function bp_pet_state_create(_definition) {
         super_used: false,
         shield: 0,
         stun_turns: 0,
-        attack_bonus: 0
+        attack_bonus: 0,
+        damage_avoided: false,
+        ghostability_active: false
     };
 }
 
@@ -23,13 +25,17 @@ function bp_shuffle(_values) {
 
 function bp_match_create(_catalog, _names, _bots, _team_size, _difficulty) {
     var _players = [];
-    var _pet_count = array_length(_catalog.pets);
+    var _public_pets = [];
+    for (var _public_pet_index = 0; _public_pet_index < array_length(_catalog.pets); _public_pet_index++) {
+        if (!_catalog.pets[_public_pet_index].owner_only) array_push(_public_pets, _catalog.pets[_public_pet_index]);
+    }
+    var _pet_count = array_length(_public_pets);
 
     for (var _p = 0; _p < array_length(_names); _p++) {
         var _team = [];
         for (var _slot = 0; _slot < _team_size; _slot++) {
             var _pet_index = (_p * _team_size + _slot) mod _pet_count;
-            array_push(_team, bp_pet_state_create(_catalog.pets[_pet_index]));
+            array_push(_team, bp_pet_state_create(_public_pets[_pet_index]));
         }
 
         array_push(_players, {
@@ -129,8 +135,14 @@ function bp_action_is_legal(_match, _player_index, _actor_slot, _action, _target
 }
 
 function bp_damage_pet(_target, _amount, _unblockable) {
+    _target.damage_avoided = false;
     if (_target.shield > 0 && !_unblockable) {
         _target.shield -= 1;
+        return 0;
+    }
+    var _damage_connection_chance = _target.ghostability_active ? 30 : _target.definition.incoming_damage_chance;
+    if (_damage_connection_chance < 100 && irandom(99) >= _damage_connection_chance) {
+        _target.damage_avoided = true;
         return 0;
     }
     var _actual = min(_target.health, max(0, _amount));
@@ -168,7 +180,7 @@ function bp_apply_action(_match, _player_index, _actor_slot, _action, _target_pl
                 break;
             case "damage":
                 var _card_damage = bp_damage_pet(_target, _card.amount, false);
-                _message = _player.name + " used " + _card.name + " for " + string(_card_damage) + " damage.";
+                _message = _target.damage_avoided ? _target.definition.name + " phased through " + _card.name + "." : _player.name + " used " + _card.name + " for " + string(_card_damage) + " damage.";
                 break;
             case "stun":
                 _target.stun_turns = max(_target.stun_turns, _card.amount);
@@ -182,13 +194,16 @@ function bp_apply_action(_match, _player_index, _actor_slot, _action, _target_pl
     } else {
         var _actor = _player.pets[_actor_slot];
         var _attack = _action == "super" ? _actor.definition.super : _actor.definition.basic;
-        if (_action == "super") _actor.super_used = true;
+        if (_action == "super") {
+            _actor.super_used = true;
+            if (_actor.definition.id == "ghost_axle") _actor.ghostability_active = true;
+        }
         var _attack_damage = _attack.damage;
         if (_attack.per_target_pet) _attack_damage *= bp_player_living_pet_count(_target_owner);
         var _damage = bp_damage_pet(_target, _attack_damage + _actor.attack_bonus, _attack.unblockable);
         if (_attack.stun > 0 && _damage > 0 && bp_pet_alive(_target)) _target.stun_turns = max(_target.stun_turns, _attack.stun);
         _message = _player.name + "'s " + _actor.definition.name + " used " + _attack.name + " on " + _target.definition.name;
-        _message += _damage == 0 ? ", but a shield blocked it." : " for " + string(_damage) + " damage.";
+        _message += _target.damage_avoided ? ", but Ghost Axle phased through it." : (_damage == 0 ? ", but a shield blocked it." : " for " + string(_damage) + " damage.");
         if (_attack.stun > 0 && _damage > 0 && bp_pet_alive(_target)) _message += " " + _target.definition.name + " is stunned for its next turn.";
     }
 
