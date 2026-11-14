@@ -789,33 +789,147 @@ if (screen == "result") {
 }
 
 if (screen == "battle") {
-    var _current_index = bp_current_player_index(match);
+    var _turn_index = bp_current_player_index(match);
+    var _current_index = battle_display_player;
     var _team_size = array_length(match.players[0].pets);
     var _showing_fx = combat_fx_timer > 0;
-    if (play_mode == "local") draw_clear(c_white);
+    draw_clear(c_white);
     draw_set_halign(fa_left);
     draw_set_valign(fa_top);
     draw_set_color(make_color_rgb(255, 210, 70));
-    draw_text_transformed(30, 18, "Round " + string(match.round) + "  |  " + match.players[_current_index].name + "'s turn", 1.35, 1.35, 0);
-    draw_set_color(play_mode == "local" ? make_color_rgb(13, 20, 38) : c_white);
+    draw_text_transformed(30, 18, "Round " + string(match.round) + "  |  " + match.players[_turn_index].name + "'s turn", 1.35, 1.35, 0);
+    draw_set_color(make_color_rgb(45, 57, 78));
     draw_text(30, 54, match.last_message);
 
-    for (var _p = 0; _p < array_length(match.players); _p++) {
+    if (battle_view_player == _current_index || battle_view_player < 0 || battle_view_player >= array_length(match.players) || match.players[battle_view_player].eliminated) {
+        for (var _find_opponent = 0; _find_opponent < array_length(match.players); _find_opponent++) {
+            if (_find_opponent != _current_index && !match.players[_find_opponent].eliminated) { battle_view_player = _find_opponent; break; }
+        }
+    }
+
+    draw_set_halign(fa_center);
+    draw_set_color(make_color_rgb(35, 48, 70));
+    draw_text_transformed(365, 112, "YOUR PETS - " + match.players[_current_index].name, 1.35, 1.35, 0);
+
+    if (array_length(match.players) > 2) {
+        var _opponent_tab = 0;
+        for (var _opponent_player = 0; _opponent_player < array_length(match.players); _opponent_player++) {
+            if (_opponent_player == _current_index) continue;
+            var _opponent_tab_x = 760 + (_opponent_tab mod 4) * 205;
+            var _opponent_tab_y = 72 + (_opponent_tab div 4) * 55;
+            draw_set_color(_opponent_player == battle_view_player ? make_color_rgb(45, 155, 90) : make_color_rgb(225, 232, 240));
+            draw_roundrect(_opponent_tab_x, _opponent_tab_y, _opponent_tab_x + 190, _opponent_tab_y + 45, false);
+            draw_set_color(_opponent_player == battle_view_player ? c_white : make_color_rgb(50, 66, 88));
+            draw_text(_opponent_tab_x + 95, _opponent_tab_y + 22, match.players[_opponent_player].name + (match.players[_opponent_player].eliminated ? " - OUT" : ""));
+            _opponent_tab += 1;
+        }
+    } else {
+        draw_set_color(make_color_rgb(35, 48, 70));
+        draw_text_transformed(1235, 112, "OPPONENT - " + match.players[battle_view_player].name, 1.35, 1.35, 0);
+    }
+
+    for (var _battle_side = 0; _battle_side < 2; _battle_side++) {
+        var _display_player_index = _battle_side == 0 ? _current_index : battle_view_player;
+        var _display_player = match.players[_display_player_index];
+        var _side_start_x = _battle_side == 0 ? 80 : 945;
+
+        for (var _side_pet_slot = 0; _side_pet_slot < _team_size; _side_pet_slot++) {
+            var _side_pet = _display_player.pets[_side_pet_slot];
+            var _side_pet_x = _side_start_x;
+            var _side_pet_y = _team_size <= 1 ? 350 : 175 + _side_pet_slot * (405 / (_team_size - 1));
+            var _side_pet_flat = _display_player_index * _team_size + _side_pet_slot;
+            var _side_is_actor = _showing_fx ? (_display_player_index == combat_fx.actor_player && _side_pet_slot == combat_fx.actor_slot) : (_battle_side == 0 && _side_pet_slot == selected_actor);
+            var _side_is_target = _showing_fx ? (_display_player_index == combat_fx.target_player && _side_pet_slot == combat_fx.target_slot) : (_battle_side == 1 && _side_pet_flat == selected_target);
+            var _side_health_ratio = clamp(_side_pet.health / _side_pet.definition.max_health, 0, 1);
+            var _vertical_health_left = _battle_side == 0 ? _side_pet_x + 18 : _side_pet_x + 533;
+            var _vertical_health_right = _vertical_health_left + 24;
+            var _vertical_health_number_x = _battle_side == 0 ? _side_pet_x + 61 : _side_pet_x + 505;
+
+            draw_set_color(make_color_rgb(214, 220, 230));
+            draw_set_alpha(0.7);
+            draw_ellipse(_side_pet_x + 45, _side_pet_y + 96, _side_pet_x + 285, _side_pet_y + 124, false);
+            draw_set_alpha(1);
+            if (_side_is_actor || _side_is_target) {
+                draw_set_color(_side_is_target ? make_color_rgb(230, 65, 65) : make_color_rgb(45, 190, 95));
+                draw_ellipse(_side_pet_x + 38, _side_pet_y - 9, _side_pet_x + 292, _side_pet_y + 126, true);
+            }
+
+            // Vertical health meter sits behind the pet and fills upward.
+            draw_set_color(make_color_rgb(218, 225, 235));
+            draw_roundrect(_vertical_health_left, _side_pet_y + 8, _vertical_health_right, _side_pet_y + 115, false);
+            draw_set_color(_side_health_ratio > 0.35 ? make_color_rgb(55, 195, 105) : make_color_rgb(230, 75, 70));
+            draw_roundrect(_vertical_health_left, _side_pet_y + 115 - 107 * _side_health_ratio, _vertical_health_right, _side_pet_y + 115, false);
+            draw_set_color(make_color_rgb(48, 62, 82));
+            draw_text(_vertical_health_number_x, _side_pet_y + 61, string(_side_pet.health));
+
+            if (_side_pet.definition.sprite != -1) {
+                if (_side_is_actor && _battle_side == 0) {
+                    draw_pet_sprite_fit(_side_pet.definition.sprite, _side_pet_x + 56, _side_pet_y - 10, 230, 132, _side_pet.health > 0 ? 1 : 0.32);
+                } else {
+                    draw_pet_sprite_fit(_side_pet.definition.sprite, _side_pet_x + 72, _side_pet_y, 200, 116, _side_pet.health > 0 ? 1 : 0.32);
+                }
+            }
+
+            var _side_pet_name = string_replace(_side_pet.definition.name, " (Placeholder)", "");
+            draw_set_color(_side_pet.health > 0 ? make_color_rgb(35, 48, 70) : make_color_rgb(145, 145, 155));
+            var _side_name_scale = fit_text_scale(_side_pet_name, 285, 1.15);
+            draw_text_transformed(_side_pet_x + 405, _side_pet_y + 27, _side_pet_name, _side_name_scale, _side_name_scale, 0);
+
+        }
+    }
+
+    // Mouse-first action tray: choose an attack, then click an opposing pet.
+    var _tray_pet = match.players[_current_index].pets[selected_actor];
+    var _battle_button_names = [
+        _tray_pet.definition.basic.name + "  -  " + string(_tray_pet.definition.basic.damage + _tray_pet.attack_bonus) + " DAMAGE",
+        _tray_pet.definition.super.name + "  -  " + string(_tray_pet.definition.super.damage + _tray_pet.attack_bonus) + " DAMAGE" + (_tray_pet.super_used ? " (USED)" : ""),
+        "SPECIALTY CARD: " + match.players[_current_index].card.name + (match.players[_current_index].card_used ? " (USED)" : "")
+    ];
+    var _battle_button_actions = ["basic", "super", "card"];
+    for (var _battle_button_index = 0; _battle_button_index < 3; _battle_button_index++) {
+        var _battle_button_x = 100 + _battle_button_index * 300;
+        var _battle_button_selected = selected_action == _battle_button_actions[_battle_button_index];
+        draw_set_color(_battle_button_selected && battle_action_armed ? make_color_rgb(35, 155, 85) : make_color_rgb(225, 232, 240));
+        draw_roundrect(_battle_button_x, 735, _battle_button_x + 270, 805, false);
+        draw_set_color(_battle_button_selected && battle_action_armed ? c_white : make_color_rgb(42, 58, 80));
+        var _battle_button_scale = fit_text_scale(_battle_button_names[_battle_button_index], 245, 1);
+        draw_text_transformed(_battle_button_x + 135, 770, _battle_button_names[_battle_button_index], _battle_button_scale, _battle_button_scale, 0);
+    }
+
+    // The selected pet's full health is always shown to the right of its attacks.
+    var _tray_health_ratio = clamp(_tray_pet.health / _tray_pet.definition.max_health, 0, 1);
+    draw_set_color(make_color_rgb(245, 247, 251));
+    draw_roundrect(1015, 735, 1530, 805, false);
+    draw_set_color(make_color_rgb(42, 58, 80));
+    draw_text(1272, 752, string_replace(_tray_pet.definition.name, " (Placeholder)", "") + " HEALTH");
+    draw_set_color(make_color_rgb(218, 225, 235));
+    draw_roundrect(1050, 770, 1495, 794, false);
+    draw_set_color(_tray_health_ratio > 0.35 ? make_color_rgb(55, 195, 105) : make_color_rgb(230, 75, 70));
+    draw_roundrect(1050, 770, 1050 + 445 * _tray_health_ratio, 794, false);
+    draw_set_color(make_color_rgb(30, 44, 62));
+    draw_text(1272, 782, string(_tray_pet.health) + " / " + string(_tray_pet.definition.max_health));
+    draw_set_halign(fa_left);
+
+    if (false) for (var _p = 0; _p < array_length(match.players); _p++) {
         var _col = _p mod 4;
         var _row = _p div 4;
         var _px = 25 + _col * 392;
         var _py = 100 + _row * 335;
-        var _panel_color = _p == _current_index && !_showing_fx ? make_color_rgb(105, 83, 24) : make_color_rgb(28, 42, 69);
-        if (match.players[_p].eliminated) _panel_color = make_color_rgb(48, 35, 44);
-        draw_set_color(_panel_color);
+        var _panel_edge = _p == _current_index && !_showing_fx ? make_color_rgb(220, 172, 38) : make_color_rgb(205, 215, 230);
+        if (match.players[_p].eliminated) _panel_edge = make_color_rgb(205, 185, 190);
+        draw_set_color(make_color_rgb(220, 226, 236));
+        draw_roundrect(_px + 6, _py + 8, _px + 376, _py + 313, false);
+        draw_set_color(c_white);
         draw_roundrect(_px, _py, _px + 370, _py + 305, false);
-        draw_set_color(c_white);
+        draw_set_color(_panel_edge);
+        draw_roundrect(_px, _py, _px + 370, _py + 305, true);
+        draw_set_color(make_color_rgb(35, 48, 70));
         draw_text(_px + 12, _py + 10, match.players[_p].name + (match.players[_p].is_bot ? " [BOT]" : ""));
-        draw_set_color(match.players[_p].card_used ? make_color_rgb(75, 62, 90) : make_color_rgb(112, 67, 150));
+        draw_set_color(match.players[_p].card_used ? make_color_rgb(235, 232, 240) : make_color_rgb(238, 225, 250));
         draw_roundrect(_px + 9, _py + 34, _px + 361, _py + 88, false);
-        draw_set_color(c_white);
+        draw_set_color(make_color_rgb(72, 45, 100));
         draw_text(_px + 17, _py + 38, "SPECIALTY: " + match.players[_p].card.name + (match.players[_p].card_used ? " (USED)" : ""));
-        draw_set_color(make_color_rgb(225, 205, 240));
+        draw_set_color(make_color_rgb(92, 72, 112));
         draw_text_ext(_px + 17, _py + 56, match.players[_p].card.description, 12, 338);
 
         var _pet_columns = 2;
@@ -834,21 +948,28 @@ if (screen == "battle") {
             var _is_target = _showing_fx ? (_p == combat_fx.target_player && _s == combat_fx.target_slot) : (_flat == selected_target);
             var _pulse = 1 + 0.025 * sin(current_time * 0.018);
             var _grow = (_is_actor || _is_target) ? 5 * _pulse : 0;
-            draw_set_color(_pet.health <= 0 ? make_color_rgb(55, 55, 65) : make_color_rgb(62, 78, 110));
-            draw_rectangle(_cx - _grow, _cy - _grow, _cx + _card_width + _grow, _cy + _card_height + _grow, false);
-            draw_set_color(_is_target ? c_red : (_is_actor ? c_lime : make_color_rgb(105, 125, 160)));
-            draw_rectangle(_cx - _grow, _cy - _grow, _cx + _card_width + _grow, _cy + _card_height + _grow, true);
+            // Pets stand over a soft floor shadow instead of living inside rectangular cards.
+            draw_set_color(_pet.health <= 0 ? make_color_rgb(225, 225, 230) : make_color_rgb(210, 218, 230));
+            draw_set_alpha(0.72);
+            draw_ellipse(_cx + 24, _cy + _card_height - 28, _cx + _card_width - 24, _cy + _card_height - 10, false);
+            draw_set_alpha(1);
+            if (_is_actor || _is_target) {
+                draw_set_color(_is_target ? make_color_rgb(230, 65, 65) : make_color_rgb(45, 190, 95));
+                draw_set_alpha(0.85);
+                draw_ellipse(_cx + 3 - _grow, _cy + 2 - _grow, _cx + _card_width - 3 + _grow, _cy + _card_height - 5 + _grow, true);
+                draw_set_alpha(1);
+            }
 
             var _short_pet_name = string_replace(_pet.definition.name, " (Placeholder)", "");
             var _status = (_pet.shield > 0 ? "Shield " : "") + (_pet.stun_turns > 0 ? "Stunned" : "");
             if (_compact_cards) {
                 if (_pet.definition.sprite != -1) draw_pet_sprite_fit(_pet.definition.sprite, _cx + 5, _cy + 5, 47, 54, _pet.health > 0 ? 1 : 0.35);
                 draw_set_halign(fa_left);
-                draw_set_color(c_white);
+                draw_set_color(make_color_rgb(35, 48, 70));
                 var _compact_text_width = _card_width - 63;
                 var _compact_name_scale = fit_text_scale(_short_pet_name, _compact_text_width, 0.76);
                 draw_text_transformed(_cx + 57, _cy + 7, _short_pet_name, _compact_name_scale, _compact_name_scale, 0);
-                draw_set_color(make_color_rgb(220, 230, 250));
+                draw_set_color(make_color_rgb(65, 82, 108));
                 var _compact_basic_text = "1 " + _pet.definition.basic.name + "  " + string(_pet.definition.basic.damage + _pet.attack_bonus);
                 var _compact_basic_scale = fit_text_scale(_compact_basic_text, _compact_text_width, 0.76);
                 draw_text_transformed(_cx + 57, _cy + 27, _compact_basic_text, _compact_basic_scale, _compact_basic_scale, 0);
@@ -863,13 +984,13 @@ if (screen == "battle") {
                 draw_set_color(_pet.health > _pet.definition.max_health * 0.35 ? make_color_rgb(80, 220, 120) : make_color_rgb(235, 80, 75));
                 draw_rectangle(_cx + 7, _cy + 68, _cx + 7 + (_card_width - 14) * (_pet.health / _pet.definition.max_health), _cy + 80, false);
                 draw_set_halign(fa_center);
-                draw_set_color(c_white);
+                draw_set_color(make_color_rgb(35, 48, 70));
                 var _compact_health_text = string(_pet.health) + "/" + string(_pet.definition.max_health) + (_status == "" ? "" : "  " + _status);
                 var _compact_health_scale = fit_text_scale(_compact_health_text, _card_width - 14, 1);
                 draw_text_transformed(_cx + _card_width * 0.5, _cy + 82, _compact_health_text, _compact_health_scale, _compact_health_scale, 0);
             } else {
                 draw_set_halign(fa_center);
-                draw_set_color(c_white);
+                draw_set_color(make_color_rgb(35, 48, 70));
                 var _tall_name_scale = fit_text_scale(_short_pet_name, _card_width - 14, 1);
                 draw_text_transformed(_cx + _card_width * 0.5, _cy + 10, _short_pet_name, _tall_name_scale, _tall_name_scale, 0);
 
@@ -882,7 +1003,7 @@ if (screen == "battle") {
                     draw_text_transformed(_cx + _card_width * 0.5, _cy + 63, "ART COMING SOON", 0.62, 0.62, 0);
                 }
 
-                draw_set_color(make_color_rgb(220, 230, 250));
+                draw_set_color(make_color_rgb(65, 82, 108));
                 var _tall_basic_text = "1 " + _pet.definition.basic.name + "  " + string(_pet.definition.basic.damage + _pet.attack_bonus);
                 var _tall_basic_scale = fit_text_scale(_tall_basic_text, _card_width - 14, 1);
                 draw_text_transformed(_cx + _card_width * 0.5, _cy + 105, _tall_basic_text, _tall_basic_scale, _tall_basic_scale, 0);
@@ -896,7 +1017,7 @@ if (screen == "battle") {
                 draw_rectangle(_cx + 7, _cy + 154, _cx + _card_width - 7, _cy + 168, false);
                 draw_set_color(_pet.health > _pet.definition.max_health * 0.35 ? make_color_rgb(80, 220, 120) : make_color_rgb(235, 80, 75));
                 draw_rectangle(_cx + 7, _cy + 154, _cx + 7 + (_card_width - 14) * (_pet.health / _pet.definition.max_health), _cy + 168, false);
-                draw_set_color(c_white);
+                draw_set_color(make_color_rgb(35, 48, 70));
                 draw_text(_cx + _card_width * 0.5, _cy + 174, string(_pet.health) + "/" + string(_pet.definition.max_health));
                 draw_set_color(make_color_rgb(185, 205, 235));
                 draw_text(_cx + _card_width * 0.5, _cy + 190, _status);
@@ -905,10 +1026,10 @@ if (screen == "battle") {
         }
     }
 
-    draw_set_color(c_black);
-    draw_rectangle(0, 790, _gw, _gh, false);
-    draw_set_color(c_white);
-    draw_text(25, 806, "Q/E: choose pet    LEFT/RIGHT: target    1: Basic    2: Super    3: Specialty    F: Details    ENTER: act    ESC: Pause / Exit    H: All Controls");
+    draw_set_color(make_color_rgb(242, 245, 250));
+    draw_rectangle(0, 820, _gw, _gh, false);
+    draw_set_color(make_color_rgb(35, 48, 70));
+    draw_text(25, 832, "CLICK YOUR PET  >  CLICK AN ATTACK  >  CLICK AN OPPONENT PET     |     ESC: Pause     H: All Controls");
     draw_set_color(make_color_rgb(255, 210, 70));
     if (!_showing_fx) {
         var _has_selected_pet = selected_actor >= 0 && selected_actor < array_length(match.players[_current_index].pets);
@@ -926,12 +1047,12 @@ if (screen == "battle") {
                 _selection_text = _selected_pet.definition.basic.name + " - " + string(_selected_pet.definition.basic.damage + _selected_pet.attack_bonus) + " damage";
             }
         }
-        draw_text(25, 844, "SELECTED: " + (_has_selected_pet ? _selected_pet.definition.name : "Specialty Card") + " | " + _selection_text + (_selected_target_pet == undefined ? "" : " | TARGET: " + _selected_target_pet.definition.name));
+        draw_text(25, 870, "SELECTED: " + (_has_selected_pet ? _selected_pet.definition.name : "Specialty Card") + " | " + _selection_text + (_selected_target_pet == undefined ? "" : " | TARGET: " + _selected_target_pet.definition.name));
     }
     if (tutorial) {
         draw_set_halign(fa_right);
         draw_set_color(make_color_rgb(145, 220, 255));
-        draw_text(_gw - 25, 844, "Tutorial: knock out every opposing pet to win.");
+        draw_text(_gw - 25, 870, "Tutorial: knock out every opposing pet to win.");
     }
 
     if (_showing_fx) {

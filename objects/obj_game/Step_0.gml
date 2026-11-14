@@ -112,7 +112,15 @@ if (screen == "pause") {
     exit;
 }
 
-if (keyboard_check_pressed(vk_escape)) {
+var _menu_has_back_button = screen == "hub" || screen == "shop" || screen == "inventory" || screen == "pack_shop" || screen == "pack_result" || screen == "mode" || screen == "trading" || screen == "trade_up" || screen == "trade_up_select" || screen == "trade_up_reward" || screen == "setup" || screen == "collection" || screen == "local_roster";
+var _menu_back_clicked = false;
+if (_menu_has_back_button && mouse_check_button_pressed(mb_left)) {
+    var _menu_back_x = device_mouse_x_to_gui(0);
+    var _menu_back_y = device_mouse_y_to_gui(0);
+    _menu_back_clicked = _menu_back_x >= 20 && _menu_back_x <= 180 && _menu_back_y >= 18 && _menu_back_y <= 62;
+}
+
+if (keyboard_check_pressed(vk_escape) || _menu_back_clicked) {
     if (screen == "battle" || screen == "handoff") {
         screen_before_pause = screen;
         screen = "pause";
@@ -152,6 +160,7 @@ if (keyboard_check_pressed(vk_escape)) {
     } else {
         screen = "main";
     }
+    if (_menu_back_clicked) exit;
 }
 
 switch (screen) {
@@ -610,35 +619,61 @@ switch (screen) {
             var _battle_my = device_mouse_y_to_gui(0);
             var _battle_team_size = array_length(_player.pets);
             if (_battle_my < 88 && _battle_mx >= 1420) { screen_before_pause = "battle"; screen = "pause"; break; }
-            for (var _battle_player_click = 0; _battle_player_click < array_length(match.players); _battle_player_click++) {
-                var _battle_panel_x = 25 + (_battle_player_click mod 4) * 392;
-                var _battle_panel_y = 100 + (_battle_player_click div 4) * 335;
-                var _battle_pet_rows = ceil(_battle_team_size / 2);
-                var _battle_card_width = 172;
-                var _battle_card_height = (199 - (_battle_pet_rows - 1) * 6) / _battle_pet_rows;
-                for (var _battle_pet_click = 0; _battle_pet_click < _battle_team_size; _battle_pet_click++) {
-                    var _battle_card_x = _battle_panel_x + 10 + (_battle_pet_click mod 2) * 178;
-                    var _battle_card_y = _battle_panel_y + 96 + (_battle_pet_click div 2) * (_battle_card_height + 6);
-                    if (_battle_mx >= _battle_card_x && _battle_mx <= _battle_card_x + _battle_card_width && _battle_my >= _battle_card_y && _battle_my <= _battle_card_y + _battle_card_height) {
-                        if (_battle_player_click == _current && bp_pet_alive(_player.pets[_battle_pet_click]) && _player.pets[_battle_pet_click].stun_turns <= 0) selected_actor = _battle_pet_click;
-                        if (_battle_player_click != _current && bp_action_is_legal(match, _current, selected_actor, selected_action, _battle_player_click, _battle_pet_click)) selected_target = _battle_player_click * _battle_team_size + _battle_pet_click;
+
+            // In 3+ player battles, choose which opposing player is shown on the right.
+            if (array_length(match.players) > 2 && _battle_my >= 72 && _battle_my <= 177) {
+                var _opponent_button = 0;
+                for (var _opponent_index = 0; _opponent_index < array_length(match.players); _opponent_index++) {
+                    if (_opponent_index == _current) continue;
+                    var _opponent_x = 760 + (_opponent_button mod 4) * 205;
+                    var _opponent_y = 72 + (_opponent_button div 4) * 55;
+                    if (_battle_mx >= _opponent_x && _battle_mx <= _opponent_x + 190 && _battle_my >= _opponent_y && _battle_my <= _opponent_y + 45) {
+                        battle_view_player = _opponent_index;
+                        selected_target = -1;
+                        for (var _tab_target_slot = 0; _tab_target_slot < _battle_team_size; _tab_target_slot++) {
+                            if (bp_action_is_legal(match, _current, selected_actor, selected_action, _opponent_index, _tab_target_slot)) {
+                                selected_target = _opponent_index * _battle_team_size + _tab_target_slot;
+                                break;
+                            }
+                        }
+                        battle_action_armed = false;
+                    }
+                    _opponent_button += 1;
+                }
+            }
+
+            // Select one of the current player's pets on the left.
+            for (var _own_pet_click = 0; _own_pet_click < _battle_team_size; _own_pet_click++) {
+                var _own_pet_x = 80;
+                var _own_pet_y = _battle_team_size <= 1 ? 350 : 175 + _own_pet_click * (405 / (_battle_team_size - 1));
+                if (_battle_mx >= _own_pet_x && _battle_mx <= _own_pet_x + 575 && _battle_my >= _own_pet_y - 8 && _battle_my <= _own_pet_y + 132) {
+                    if (bp_pet_alive(_player.pets[_own_pet_click]) && _player.pets[_own_pet_click].stun_turns <= 0) {
+                        selected_actor = _own_pet_click;
+                        battle_action_armed = false;
                     }
                 }
             }
-            if (_battle_my >= 790) {
-                if (_battle_mx < 255) selected_action = "basic";
-                else if (_battle_mx < 475) selected_action = "super";
-                else if (_battle_mx < 695) selected_action = "card";
-                else if (_battle_mx < 895) { controls_open = true; details_open = false; break; }
-                else if (_battle_mx < 1095) {
-                    details_open = !details_open;
-                    if (details_open) { detail_player = selected_target >= 0 ? selected_target div _battle_team_size : _current; detail_slot = selected_target >= 0 ? selected_target mod _battle_team_size : selected_actor; }
-                    break;
-                } else if (selected_target >= 0) {
-                    var _click_target_player = selected_target div _battle_team_size;
-                    var _click_target_slot = selected_target mod _battle_team_size;
-                    present_action(_current, selected_actor, selected_action, _click_target_player, _click_target_slot);
-                    break;
+
+            // Attack buttons arm an action; clicking an enemy pet performs it.
+            if (_battle_my >= 735 && _battle_my <= 805) {
+                if (_battle_mx >= 100 && _battle_mx <= 370) { selected_action = "basic"; battle_action_armed = true; }
+                if (_battle_mx >= 400 && _battle_mx <= 670) { selected_action = "super"; battle_action_armed = true; }
+                if (_battle_mx >= 700 && _battle_mx <= 970) { selected_action = "card"; battle_action_armed = true; }
+            }
+
+            if (battle_view_player == _current || battle_view_player < 0 || battle_view_player >= array_length(match.players)) battle_view_player = (_current + 1) mod array_length(match.players);
+            for (var _enemy_pet_click = 0; _enemy_pet_click < _battle_team_size; _enemy_pet_click++) {
+                var _enemy_pet_x = 945;
+                var _enemy_pet_y = _battle_team_size <= 1 ? 350 : 175 + _enemy_pet_click * (405 / (_battle_team_size - 1));
+                if (_battle_mx >= _enemy_pet_x && _battle_mx <= _enemy_pet_x + 575 && _battle_my >= _enemy_pet_y - 8 && _battle_my <= _enemy_pet_y + 132) {
+                    if (bp_action_is_legal(match, _current, selected_actor, selected_action, battle_view_player, _enemy_pet_click)) {
+                        selected_target = battle_view_player * _battle_team_size + _enemy_pet_click;
+                        if (battle_action_armed) {
+                            battle_action_armed = false;
+                            present_action(_current, selected_actor, selected_action, battle_view_player, _enemy_pet_click);
+                            exit;
+                        }
+                    }
                 }
             }
         }
@@ -688,9 +723,9 @@ switch (screen) {
             break;
         }
 
-        if (keyboard_check_pressed(ord("1"))) selected_action = "basic";
-        if (keyboard_check_pressed(ord("2"))) selected_action = "super";
-        if (keyboard_check_pressed(ord("3"))) selected_action = "card";
+        if (keyboard_check_pressed(ord("1"))) { selected_action = "basic"; battle_action_armed = true; }
+        if (keyboard_check_pressed(ord("2"))) { selected_action = "super"; battle_action_armed = true; }
+        if (keyboard_check_pressed(ord("3"))) { selected_action = "card"; battle_action_armed = true; }
 
         if (keyboard_check_pressed(ord("Q")) || keyboard_check_pressed(ord("E"))) {
             var _direction = keyboard_check_pressed(ord("Q")) ? -1 : 1;
@@ -711,6 +746,7 @@ switch (screen) {
             var _from = selected_target < 0 ? -1 : selected_target;
             selected_target = bp_find_legal_target(match, _current, selected_actor, selected_action, _from, _target_direction == 0 ? 1 : _target_direction);
         }
+        if (selected_target >= 0) battle_view_player = selected_target div array_length(_player.pets);
 
         if (keyboard_check_pressed(vk_enter) && selected_target >= 0) {
             var _target_player = selected_target div array_length(_player.pets);

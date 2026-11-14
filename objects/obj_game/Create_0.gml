@@ -87,6 +87,9 @@ match = undefined;
 selected_actor = 0;
 selected_action = "basic";
 selected_target = -1;
+battle_view_player = 1;
+battle_display_player = 0;
+battle_action_armed = false;
 bot_delay = 30;
 tutorial = false;
 details_open = false;
@@ -158,7 +161,8 @@ can_sell_pet = function(_pet_index) {
 };
 
 bot_think_delays = [90, 50, 18];
-bot_action_delays = [110, 75, 45];
+// Keep opponent action details readable even when fast bot turns are selected.
+bot_action_delays = [180, 150, 120];
 
 get_bot_think_delay = function() {
     return bot_think_delays[setup_bot_speed];
@@ -458,6 +462,9 @@ start_match = function() {
     selected_action = "basic";
     selected_actor = bp_first_legal_actor(match, bp_current_player_index(match));
     selected_target = bp_find_legal_target(match, bp_current_player_index(match), selected_actor, selected_action, -1, 1);
+    battle_display_player = play_mode == "bot" ? 0 : bp_current_player_index(match);
+    battle_view_player = selected_target >= 0 ? selected_target div array_length(match.players[0].pets) : 0;
+    battle_action_armed = false;
     bot_delay = get_bot_think_delay();
     details_open = false;
     controls_open = false;
@@ -473,9 +480,12 @@ start_match = function() {
 reset_turn_selection = function() {
     if (match.phase != "active") exit;
     var _current = bp_current_player_index(match);
+    if (play_mode == "local") battle_display_player = _current;
     selected_action = "basic";
     selected_actor = bp_first_legal_actor(match, _current);
     selected_target = bp_find_legal_target(match, _current, selected_actor, selected_action, -1, 1);
+    battle_view_player = selected_target >= 0 ? selected_target div array_length(match.players[0].pets) : ((_current + 1) mod array_length(match.players));
+    battle_action_armed = false;
     bot_delay = match.players[_current].is_bot ? get_bot_think_delay() : 30;
 };
 
@@ -491,6 +501,9 @@ present_action = function(_player_index, _actor_slot, _action, _target_player, _
     }
 
     if (!bp_apply_action(match, _player_index, _actor_slot, _action, _target_player, _target_slot)) return false;
+
+    // Keep the human team anchored on the left; show the attacking bot on the right.
+    if (play_mode == "bot" && _player.is_bot) battle_view_player = _player_index;
 
     var _presentation_duration = _player.is_bot ? bot_action_delays[setup_bot_speed] : combat_fx_duration;
     combat_fx = {
