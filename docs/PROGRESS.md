@@ -59,7 +59,11 @@
 - [x] Define the initial PostgreSQL/Prisma account, profile, content, inventory, currency, lobby, match, and action schema.
 - [x] Add local PostgreSQL and Mailpit services through Docker Compose.
 - [x] Build the React/Vite admin navigation and service-health shell.
-- [ ] Implement authentication, MFA, authorization, and audit logging.
+- [-] Implement authentication, MFA, authorization, and audit logging. Invite-only player registration, verification, login, rotating sessions, password recovery, and profile lookup are implemented; admin MFA/authorization/audit operations remain.
+- [x] Add initial Prisma migrations, Mailpit/Mailtrap email adapters, account integration tests, and fail-closed registration modes.
+- [x] Add GitHub CI definitions for PostgreSQL-backed service tests, admin builds, GameMaker source checks, staging-only production promotion, immutable container builds, and post-test deployment.
+- [-] Connect the GameMaker launch flow to signup, verification, login, offline mode, and device-bound session restoration; packaged Windows hands-on verification remains.
+- [ ] Deploy staging. The inspected existing Droplet has only 1 GB total RAM and is blocked until Dad supplies at least 2 GiB free RAM and 10 GiB free disk without risking its existing website.
 - [ ] Implement admin CRUD, validation, preview, versioning, and publishing APIs/forms.
 
 ## Verification completed

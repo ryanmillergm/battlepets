@@ -23,8 +23,10 @@ Offline GML and online TypeScript rules engines consume the same content shape a
 - `GET /health` returns service health and protocol version.
 - `GET /v1/features` returns the four independent release gates.
 - `GET /v1/ws` accepts a WebSocket connection but currently rejects commands as unauthenticated.
+- Invite-gated registration, email verification, login, rotating refresh sessions, logout, password recovery, account lookup, and display-name updates are implemented under `/v1/auth`, `/v1/account`, and `/v1/profile`.
+- Registration is controlled by `closed`, `invite`, and `public` server modes. Production defaults closed independently from the child-online, chat, payment, and voice gates.
 
-Authentication, catalog CRUD, publishing, lobbies, moderation, economy, and account APIs are designs, not implemented endpoints. Their OpenAPI and WebSocket schemas must be written before client integration.
+Catalog CRUD, publishing, lobbies, moderation, economy, and online-match APIs remain designs. Their OpenAPI and WebSocket schemas must be written before online battle integration.
 
 ## Content lifecycle
 

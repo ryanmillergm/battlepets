@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+environment="${1:-}"
+image="${2:-}"
+case "$environment" in
+  staging) port=3101 ;;
+  production) port=3100 ;;
+  *) echo "Environment must be staging or production" >&2; exit 2 ;;
+esac
+[[ "$image" == ghcr.io/*/battlepets-server:* ]] || { echo "Unexpected image" >&2; exit 2; }
+
+root="/opt/battlepets"
+env_file="$root/$environment.env"
+compose="$root/compose.yml"
+state="$root/$environment.image"
+test -f "$env_file"
+test -f "$compose"
+
+previous=""
+test -f "$state" && previous="$(cat "$state")"
+export BATTLEPETS_ENV_FILE="$env_file" BATTLEPETS_API_PORT="$port" BATTLEPETS_IMAGE="$image"
+docker compose -p "battlepets-$environment" -f "$compose" pull
+docker compose -p "battlepets-$environment" -f "$compose" run --rm api npm run db:deploy
+docker compose -p "battlepets-$environment" -f "$compose" up -d --remove-orphans
+
+for _ in {1..20}; do
+  if curl --fail --silent "http://127.0.0.1:$port/health" >/dev/null; then
+    printf '%s\n' "$image" > "$state"
+    exit 0
+  fi
+  sleep 2
+done
+
+if [[ -n "$previous" ]]; then
+  export BATTLEPETS_IMAGE="$previous"
+  docker compose -p "battlepets-$environment" -f "$compose" up -d --remove-orphans
+fi
+echo "Deployment health check failed; previous image restored when available" >&2
+exit 1

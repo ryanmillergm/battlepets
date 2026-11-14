@@ -5,9 +5,60 @@ title_font = font_add("Arial", 190, true, false, 32, 127);
 catalog = bp_catalog_create();
 global.bp_self_tests_passed = bp_run_self_tests(catalog);
 
-account_id = "owner_glitch";
-account_username = "Glitch";
-account_verified = account_id == "owner_glitch";
+account_id = "";
+account_username = "Guest";
+account_verified = false;
+account_api_url = "https://battlepets-staging.duckdns.org";
+account_access_token = "";
+account_refresh_token = "";
+account_request_id = -1;
+account_request_kind = "";
+account_message = "";
+account_busy = false;
+account_field = 0;
+account_email = "";
+account_password = "";
+account_invite = "";
+account_new_username = "";
+account_display_name = "";
+account_code = "";
+account_new_password = "";
+
+account_set_keyboard = function() {
+    if (screen == "account_login") keyboard_string = account_field == 0 ? account_email : account_password;
+    if (screen == "account_signup") {
+        var _values = [account_invite, account_email, account_password, account_new_username, account_display_name];
+        keyboard_string = _values[account_field];
+    }
+    if (screen == "account_verify") keyboard_string = account_code;
+    if (screen == "account_forgot") keyboard_string = account_email;
+    if (screen == "account_reset") keyboard_string = account_field == 0 ? account_code : account_new_password;
+};
+
+account_send = function(_kind, _path, _payload, _access_token) {
+    if (account_busy) return false;
+    var _headers = ds_map_create();
+    ds_map_add(_headers, "Content-Type", "application/json");
+    if (_access_token != "") ds_map_add(_headers, "Authorization", "Bearer " + _access_token);
+    account_request_id = http_request(account_api_url + _path, "POST", _headers, json_stringify(_payload));
+    ds_map_destroy(_headers);
+    account_request_kind = _kind;
+    account_busy = true;
+    account_message = "Connecting...";
+    return true;
+};
+
+account_save_refresh = function(_token) {
+    var _secure = ds_map_create();
+    ds_map_add(_secure, "refresh_token", _token);
+    ds_map_secure_save(_secure, "battlepets_session.dat");
+    ds_map_destroy(_secure);
+};
+
+account_clear_refresh = function() {
+    if (file_exists("battlepets_session.dat")) file_delete("battlepets_session.dat");
+    account_refresh_token = "";
+};
 
 ini_open("battlepets_save.ini");
 battle_coins = max(0, floor(ini_read_real("currency", "battle_coins", 0)));
@@ -25,7 +76,7 @@ for (var _inventory_load = 0; _inventory_load < array_length(catalog.pets); _inv
 }
 ini_close();
 
-screen = "main";
+screen = "account_login";
 screen_before_pause = "battle";
 play_mode = "bot";
 setup_players = saved_bot_players;
@@ -78,6 +129,17 @@ inventory_cursor = array_length(catalog.pets) - 1;
 inventory_scroll_row = max(0, ceil(array_length(catalog.pets) / 4) - 2);
 sale_confirm_stage = 0;
 economy_message = "";
+
+if (file_exists("battlepets_session.dat")) {
+    var _saved_session = ds_map_secure_load("battlepets_session.dat");
+    if (_saved_session != -1) {
+        account_refresh_token = ds_map_find_value(_saved_session, "refresh_token");
+        ds_map_destroy(_saved_session);
+        if (is_string(account_refresh_token) && account_refresh_token != "") {
+            account_send("refresh", "/v1/auth/refresh", { refreshToken: account_refresh_token }, "");
+        }
+    }
+}
 
 rarity_names = ["Basic", "Uncommon", "Epic", "Legendary", "Exalted"];
 rarity_sale_values = [5, 10, 20, 30, 50];

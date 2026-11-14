@@ -15,6 +15,17 @@ npm run build
 npm run db:generate
 ```
 
+Authentication integration tests run when PostgreSQL is available:
+
+```powershell
+$env:DATABASE_URL='postgresql://battlepets:local-password@localhost:5432/battlepets_test'
+$env:RUN_DATABASE_TESTS='true'
+npm run db:deploy
+npm test
+```
+
+GitHub CI provisions an isolated PostgreSQL 16 service and runs these integration tests automatically for pull requests into `staging` and `main`.
+
 Build the dashboard with:
 
 ```powershell
@@ -51,7 +62,7 @@ Test team sizes 2, 3, and 4 at participant counts 2 through 8. For each supporte
 
 - No automated client UI/input tests or full 2–8 player gameplay simulations.
 - Offline and TypeScript engines do not yet share generated cross-language fixtures.
-- No authentication, admin CRUD, lobby, reconnect, economy, moderation, or end-to-end online tests because those features are not implemented.
+- Authentication endpoints have PostgreSQL integration coverage, but the Windows account screens still require packaged-build testing. No admin CRUD, lobby, reconnect, economy, moderation, or end-to-end online battle tests exist yet.
 - No production load, penetration, accessibility, deletion/retention, consent, payment, or voice testing.
 
 Record the command, date, environment, result, and relevant log whenever a milestone is marked verified in `PROGRESS.md`.

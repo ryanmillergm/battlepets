@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: ${BATTLEPETS_ENV_FILE}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  api:
+    image: ${BATTLEPETS_IMAGE}
+    restart: unless-stopped
+    env_file: ${BATTLEPETS_ENV_FILE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${BATTLEPETS_API_PORT}:3000"
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  postgres_data:

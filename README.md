@@ -2,7 +2,7 @@
 
 Battlepets is a turn-based, free-for-all creature battler built with GameMaker. Two to eight players bring teams of two to four Battlepets, take turns in a randomized rotating order, and may attack any opposing pet. The final player with a living pet wins.
 
-The current implementation target is a polished Windows desktop vertical slice with a tutorial, three bot difficulties, and local pass-and-play. Accounts, public online lobbies, collection/economy systems, child-safety controls, payments, and voice are staged behind that playable foundation.
+The current implementation includes a polished Windows offline slice plus an invite-only account foundation under active development. Public online lobbies, production child registration, server-backed economy, payments, and voice remain release-gated.
 
 ## Repository layout
 
@@ -40,6 +40,8 @@ On the main menu, click `FULLSCREEN` to enter true fullscreen mode or `WINDOWED`
 4. Run `npm install`, `npm run db:generate`, and `npm run db:migrate` in `server/`.
 5. Run `npm run dev` in `server/` and `admin/` in separate terminals.
 6. Open the admin dashboard at `http://localhost:5173`; local email is visible at `http://localhost:8025`.
+
+Account development uses single-use invitations, email verification, rotating sessions, and a device-bound secure GameMaker session file. The Windows client can always choose Offline while staging is unavailable. See [deployment](docs/DEPLOYMENT.md) before configuring GitHub or a server.
 
 Development adapters fail closed: child online access, chat, payments, and voice default to disabled.
 

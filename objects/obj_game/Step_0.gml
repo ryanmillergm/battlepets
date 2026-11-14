@@ -1,3 +1,62 @@
+if (string_pos("account_", screen) == 1) {
+    if (screen == "account_login") {
+        if (account_field == 0) account_email = string_copy(keyboard_string, 1, 254); else account_password = string_copy(keyboard_string, 1, 128);
+        if (keyboard_check_pressed(vk_tab)) { account_field = 1 - account_field; account_set_keyboard(); }
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("login", "/v1/auth/login", { email: account_email, password: account_password }, "");
+        if (keyboard_check_pressed(vk_f2)) { screen = "account_signup"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (keyboard_check_pressed(vk_f3)) { account_id = "owner_glitch"; account_username = "Glitch"; account_verified = true; keyboard_string = ""; screen = "main"; }
+        if (keyboard_check_pressed(vk_f5)) { screen = "account_forgot"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _login_x = device_mouse_x_to_gui(0); var _login_y = device_mouse_y_to_gui(0);
+            if (_login_y >= 285 && _login_y <= 345) { account_field = 0; account_set_keyboard(); }
+            if (_login_y >= 370 && _login_y <= 430) { account_field = 1; account_set_keyboard(); }
+            if (_login_x >= 555 && _login_x <= 1045 && _login_y >= 485 && _login_y <= 545 && !account_busy) account_send("login", "/v1/auth/login", { email: account_email, password: account_password }, "");
+            if (_login_x >= 555 && _login_x <= 790 && _login_y >= 575 && _login_y <= 635) { screen = "account_signup"; account_field = 0; account_message = ""; account_set_keyboard(); }
+            if (_login_x >= 810 && _login_x <= 1045 && _login_y >= 575 && _login_y <= 635) { account_id = "owner_glitch"; account_username = "Glitch"; account_verified = true; keyboard_string = ""; screen = "main"; }
+            if (_login_x >= 650 && _login_x <= 950 && _login_y >= 660 && _login_y <= 715) { screen = "account_forgot"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        }
+    } else if (screen == "account_signup") {
+        if (account_field == 0) account_invite = string_copy(keyboard_string, 1, 128);
+        if (account_field == 1) account_email = string_copy(keyboard_string, 1, 254);
+        if (account_field == 2) account_password = string_copy(keyboard_string, 1, 128);
+        if (account_field == 3) account_new_username = string_copy(keyboard_string, 1, 20);
+        if (account_field == 4) account_display_name = string_copy(keyboard_string, 1, 24);
+        if (keyboard_check_pressed(vk_tab)) { account_field = (account_field + 1) mod 5; account_set_keyboard(); }
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("register", "/v1/auth/register", { inviteCode: account_invite, email: account_email, password: account_password, username: account_new_username, displayName: account_display_name }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _signup_y = device_mouse_y_to_gui(0);
+            for (var _signup_field = 0; _signup_field < 5; _signup_field++) if (_signup_y >= 230 + _signup_field * 82 && _signup_y <= 288 + _signup_field * 82) { account_field = _signup_field; account_set_keyboard(); }
+            if (_signup_y >= 665 && _signup_y <= 725 && !account_busy) account_send("register", "/v1/auth/register", { inviteCode: account_invite, email: account_email, password: account_password, username: account_new_username, displayName: account_display_name }, "");
+        }
+    } else if (screen == "account_verify") {
+        account_code = string_copy(keyboard_string, 1, 6);
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("verify", "/v1/auth/verify-email", { email: account_email, code: account_code }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _verify_y = device_mouse_y_to_gui(0);
+            if (_verify_y >= 470 && _verify_y <= 535 && !account_busy) account_send("verify", "/v1/auth/verify-email", { email: account_email, code: account_code }, "");
+        }
+    } else if (screen == "account_forgot") {
+        account_email = string_copy(keyboard_string, 1, 254);
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("forgot", "/v1/auth/forgot-password", { email: account_email }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left) && device_mouse_y_to_gui(0) >= 470 && device_mouse_y_to_gui(0) <= 535 && !account_busy) account_send("forgot", "/v1/auth/forgot-password", { email: account_email }, "");
+    } else if (screen == "account_reset") {
+        if (account_field == 0) account_code = string_copy(keyboard_string, 1, 6); else account_new_password = string_copy(keyboard_string, 1, 128);
+        if (keyboard_check_pressed(vk_tab)) { account_field = 1 - account_field; account_set_keyboard(); }
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("reset", "/v1/auth/reset-password", { email: account_email, code: account_code, password: account_new_password }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _reset_y = device_mouse_y_to_gui(0);
+            if (_reset_y >= 300 && _reset_y <= 365) { account_field = 0; account_set_keyboard(); }
+            if (_reset_y >= 400 && _reset_y <= 465) { account_field = 1; account_set_keyboard(); }
+            if (_reset_y >= 535 && _reset_y <= 600 && !account_busy) account_send("reset", "/v1/auth/reset-password", { email: account_email, code: account_code, password: account_new_password }, "");
+        }
+    }
+    exit;
+}
+
 var _fullscreen_click = false;
 if (screen == "main" && mouse_check_button_pressed(mb_left)) {
     var _fullscreen_mx = device_mouse_x_to_gui(0);
@@ -6,6 +65,19 @@ if (screen == "main" && mouse_check_button_pressed(mb_left)) {
 }
 if (_fullscreen_click || keyboard_check_pressed(vk_f11)) {
     window_set_fullscreen(!window_get_fullscreen());
+}
+
+if (screen == "main" && account_refresh_token != "" && (keyboard_check_pressed(vk_f4) || (mouse_check_button_pressed(mb_left) && device_mouse_x_to_gui(0) >= 1360 && device_mouse_x_to_gui(0) <= 1580 && device_mouse_y_to_gui(0) >= 75 && device_mouse_y_to_gui(0) <= 120))) {
+    account_send("logout", "/v1/auth/logout", { refreshToken: account_refresh_token }, "");
+    account_clear_refresh();
+    account_access_token = "";
+    account_id = "";
+    account_username = "Guest";
+    account_verified = false;
+    account_field = 0;
+    keyboard_string = account_email;
+    screen = "account_login";
+    exit;
 }
 
 if (screen == "local_roster" && roster_editing) {

@@ -67,6 +67,63 @@ var draw_pet_sprite_fit_bounds = function(_sprite, _left, _top, _width, _height,
     draw_sprite_ext(_sprite, 0, _draw_x, _draw_y, _sprite_scale, _sprite_scale, 0, c_white, _alpha);
 };
 
+if (string_pos("account_", screen) == 1) {
+    draw_clear(c_white);
+    draw_set_color(make_color_rgb(212, 160, 20));
+    draw_text_transformed(_gw * 0.5, 105, "BATTLEPETS ONLINE", 2.35, 2.35, 0);
+    draw_set_color(make_color_rgb(50, 62, 85));
+    if (screen == "account_login") {
+        draw_text_transformed(_gw * 0.5, 190, "LOG IN", 1.7, 1.7, 0);
+        var _login_labels = ["EMAIL", "PASSWORD"];
+        var _login_values = [account_email, string_repeat("*", string_length(account_password))];
+        for (var _login_draw = 0; _login_draw < 2; _login_draw++) {
+            var _login_top = 285 + _login_draw * 85;
+            draw_set_color(_login_draw == account_field ? make_color_rgb(220, 235, 255) : make_color_rgb(238, 242, 248)); draw_roundrect(450, _login_top, 1150, _login_top + 60, false);
+            draw_set_halign(fa_left); draw_set_color(make_color_rgb(70, 85, 110)); draw_text(475, _login_top - 20, _login_labels[_login_draw]); draw_text(475, _login_top + 30, _login_values[_login_draw]); draw_set_halign(fa_center);
+        }
+        draw_set_color(make_color_rgb(70, 145, 220)); draw_roundrect(555, 485, 1045, 545, false); draw_set_color(c_white); draw_text(_gw * 0.5, 515, account_busy ? "CONNECTING..." : "LOG IN");
+        draw_set_color(make_color_rgb(80, 175, 135)); draw_roundrect(555, 575, 790, 635, false); draw_set_color(c_white); draw_text(672, 605, "F2 - SIGN UP");
+        draw_set_color(make_color_rgb(95, 108, 132)); draw_roundrect(810, 575, 1045, 635, false); draw_set_color(c_white); draw_text(927, 605, "F3 - OFFLINE");
+        draw_set_color(make_color_rgb(75, 88, 112)); draw_roundrect(650, 660, 950, 715, false); draw_set_color(c_white); draw_text(_gw * 0.5, 687, "F5 - FORGOT PASSWORD");
+    } else if (screen == "account_signup") {
+        draw_text_transformed(_gw * 0.5, 165, "CREATE TEST ACCOUNT", 1.5, 1.5, 0);
+        var _signup_labels = ["INVITE CODE", "EMAIL", "PASSWORD (10+ CHARACTERS)", "UNIQUE USERNAME", "DISPLAY NAME"];
+        var _signup_values = [account_invite, account_email, string_repeat("*", string_length(account_password)), account_new_username, account_display_name];
+        for (var _signup_draw = 0; _signup_draw < 5; _signup_draw++) {
+            var _signup_top = 230 + _signup_draw * 82;
+            draw_set_color(_signup_draw == account_field ? make_color_rgb(220, 235, 255) : make_color_rgb(238, 242, 248)); draw_roundrect(410, _signup_top, 1190, _signup_top + 58, false);
+            draw_set_halign(fa_left); draw_set_color(make_color_rgb(70, 85, 110)); draw_text(435, _signup_top - 18, _signup_labels[_signup_draw]); draw_text(435, _signup_top + 29, _signup_values[_signup_draw]); draw_set_halign(fa_center);
+        }
+        draw_set_color(make_color_rgb(80, 175, 135)); draw_roundrect(555, 665, 1045, 725, false); draw_set_color(c_white); draw_text(_gw * 0.5, 695, account_busy ? "CREATING..." : "CREATE ACCOUNT");
+        draw_set_color(make_color_rgb(95, 108, 132)); draw_text(_gw * 0.5, 765, "TAB changes field    |    ESC returns to login");
+    } else if (screen == "account_verify") {
+        draw_text_transformed(_gw * 0.5, 225, "CHECK THE TEST EMAIL", 1.6, 1.6, 0);
+        draw_set_color(make_color_rgb(75, 88, 112)); draw_text(_gw * 0.5, 285, "Enter the six-digit code sent for " + account_email);
+        draw_set_color(make_color_rgb(220, 235, 255)); draw_roundrect(570, 355, 1030, 425, false); draw_set_color(make_color_rgb(38, 50, 72)); draw_text_transformed(_gw * 0.5, 390, account_code, 1.8, 1.8, 0);
+        draw_set_color(make_color_rgb(70, 145, 220)); draw_roundrect(555, 470, 1045, 535, false); draw_set_color(c_white); draw_text(_gw * 0.5, 502, account_busy ? "VERIFYING..." : "VERIFY EMAIL");
+        draw_set_color(make_color_rgb(95, 108, 132)); draw_text(_gw * 0.5, 600, "ENTER verifies    |    ESC returns to login");
+    } else if (screen == "account_forgot") {
+        draw_text_transformed(_gw * 0.5, 225, "RESET PASSWORD", 1.6, 1.6, 0);
+        draw_set_color(make_color_rgb(75, 88, 112)); draw_text(_gw * 0.5, 285, "Enter your account email. The response is the same whether it exists or not.");
+        draw_set_color(make_color_rgb(220, 235, 255)); draw_roundrect(450, 355, 1150, 425, false); draw_set_halign(fa_left); draw_set_color(make_color_rgb(38, 50, 72)); draw_text(475, 390, account_email); draw_set_halign(fa_center);
+        draw_set_color(make_color_rgb(70, 145, 220)); draw_roundrect(555, 470, 1045, 535, false); draw_set_color(c_white); draw_text(_gw * 0.5, 502, account_busy ? "REQUESTING..." : "SEND RESET CODE");
+        draw_set_color(make_color_rgb(95, 108, 132)); draw_text(_gw * 0.5, 600, "ENTER requests a code    |    ESC returns to login");
+    } else {
+        draw_text_transformed(_gw * 0.5, 205, "CHOOSE A NEW PASSWORD", 1.55, 1.55, 0);
+        var _reset_labels = ["SIX-DIGIT CODE", "NEW PASSWORD (10+ CHARACTERS)"];
+        var _reset_values = [account_code, string_repeat("*", string_length(account_new_password))];
+        for (var _reset_draw = 0; _reset_draw < 2; _reset_draw++) {
+            var _reset_top = 300 + _reset_draw * 100;
+            draw_set_color(_reset_draw == account_field ? make_color_rgb(220, 235, 255) : make_color_rgb(238, 242, 248)); draw_roundrect(450, _reset_top, 1150, _reset_top + 65, false);
+            draw_set_halign(fa_left); draw_set_color(make_color_rgb(70, 85, 110)); draw_text(475, _reset_top - 20, _reset_labels[_reset_draw]); draw_text(475, _reset_top + 32, _reset_values[_reset_draw]); draw_set_halign(fa_center);
+        }
+        draw_set_color(make_color_rgb(70, 145, 220)); draw_roundrect(555, 535, 1045, 600, false); draw_set_color(c_white); draw_text(_gw * 0.5, 567, account_busy ? "RESETTING..." : "RESET PASSWORD");
+        draw_set_color(make_color_rgb(95, 108, 132)); draw_text(_gw * 0.5, 660, "TAB changes field    |    ESC returns to login");
+    }
+    if (account_message != "" && account_message != "Connecting...") { draw_set_color(make_color_rgb(195, 55, 55)); draw_text(_gw * 0.5, 835, account_message); }
+    exit;
+}
+
 if (screen == "pause") {
     draw_set_color(make_color_rgb(255, 210, 70));
     draw_text_transformed(_gw * 0.5, 225, "LEAVE THIS MATCH?", 2.25, 2.25, 0);
@@ -88,6 +145,12 @@ if (screen == "pause") {
 if (screen == "main") {
     draw_clear(c_white);
     draw_account_identity(35, 40);
+    if (account_refresh_token != "") {
+        draw_set_color(make_color_rgb(75, 88, 112));
+        draw_roundrect(1360, 75, 1580, 120, false);
+        draw_set_color(c_white);
+        draw_text(1470, 97, "F4 - LOG OUT");
+    }
     if (title_font != -1) draw_set_font(title_font);
     var _main_logo_scale = title_font == -1 ? fit_text_scale("BATTLEPETS", _gw - 230, 14) : min(1, (_gw - 230) / max(1, string_width("BATTLEPETS")));
     draw_set_color(make_color_rgb(62, 45, 10));
@@ -312,8 +375,23 @@ if (screen == "mode") {
     draw_set_color(make_color_rgb(212, 160, 20));
     draw_text_transformed(_gw - 35, 35, "BATTLE COINS: " + string(battle_coins), 1.25, 1.25, 0);
     draw_set_halign(fa_center);
+    var _settings_gear_x = _gw * 0.09;
+    var _settings_gear_y = 170;
+    var _settings_logo_scale = 1.65;
+    draw_sprite_ext(
+        bpsettinglg,
+        0,
+        _settings_gear_x - sprite_get_width(bpsettinglg) * _settings_logo_scale * 0.5,
+        _settings_gear_y - sprite_get_height(bpsettinglg) * _settings_logo_scale * 0.5,
+        _settings_logo_scale,
+        _settings_logo_scale,
+        0,
+        c_white,
+        1
+    );
+
     draw_set_color(make_color_rgb(105, 135, 180));
-    draw_text_transformed(_gw * 0.15, 170, "S  -  SETTINGS", 1.65, 1.65, 0);
+    draw_text_transformed(_gw * 0.165, 170, "SETTINGS", 1.65, 1.65, 0);
     draw_set_color(make_color_rgb(95, 108, 132));
     draw_text_transformed(_gw * 0.15, 235, "COMING SOON", 1.15, 1.15, 0);
     draw_set_color(make_color_rgb(255, 210, 70));
@@ -322,8 +400,22 @@ if (screen == "mode") {
     draw_text_transformed(_gw * 0.5, 330, "B  -  BOTS", 1.5, 1.5, 0);
     draw_set_color(make_color_rgb(110, 235, 155));
     draw_text_transformed(_gw * 0.5, 420, "L  -  LOCAL (TAKE TURNS)", 1.5, 1.5, 0);
+    var _trading_logo_x = _gw * 0.775;
+    var _trading_logo_y = 170;
+    var _trading_logo_scale = 2.1;
+    draw_sprite_ext(
+        bptradinglg,
+        0,
+        _trading_logo_x - sprite_get_width(bptradinglg) * _trading_logo_scale * 0.5,
+        _trading_logo_y - sprite_get_height(bptradinglg) * _trading_logo_scale * 0.5,
+        _trading_logo_scale,
+        _trading_logo_scale,
+        0,
+        c_white,
+        1
+    );
     draw_set_color(make_color_rgb(25, 155, 85));
-    draw_text_transformed(_gw * 0.85, 170, "T  -  TRADING", 1.65, 1.65, 0);
+    draw_text_transformed(_gw * 0.85, 170, "TRADING", 1.65, 1.65, 0);
     draw_set_color(make_color_rgb(55, 125, 85));
     draw_text_ext_transformed(_gw * 0.85, 235, "Trade Battlepets with other players", 20, 360, 1.05, 1.05, 0);
     draw_set_color(make_color_rgb(95, 108, 132));

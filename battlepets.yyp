@@ -61,6 +61,8 @@
     {"id":{"name":"Battlepetpack","path":"sprites/Battlepetpack/Battlepetpack.yy",},},
     {"id":{"name":"BPPorchaandMercadies_1","path":"sprites/BPPorchaandMercadies_1/BPPorchaandMercadies_1.yy",},},
     {"id":{"name":"BPPorchaandMercadies","path":"sprites/BPPorchaandMercadies/BPPorchaandMercadies.yy",},},
+    {"id":{"name":"bpsettinglg","path":"sprites/bpsettinglg/bpsettinglg.yy",},},
+    {"id":{"name":"bptradinglg","path":"sprites/bptradinglg/bptradinglg.yy",},},
     {"id":{"name":"Epicbattlepetpack_runtime","path":"sprites/Epicbattlepetpack_runtime/Epicbattlepetpack_runtime.yy",},},
     {"id":{"name":"Epicbattlepetpack","path":"sprites/Epicbattlepetpack/Epicbattlepetpack.yy",},},
     {"id":{"name":"GhostAxle","path":"sprites/GhostAxle/GhostAxle.yy",},},
