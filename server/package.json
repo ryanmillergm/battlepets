@@ -7,15 +7,16 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "node --env-file=.env --import tsx --watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "node --env-file=.env dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "invite:create": "tsx src/create-invite.ts"
+    "invite:create": "node --env-file=.env dist/create-invite.js",
+    "owner:lookup": "node --env-file=.env dist/lookup-owner.js"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",

@@ -1,7 +1,10 @@
 if (async_load[? "id"] != account_request_id) exit;
 
 account_busy = false;
-var _status = async_load[? "status"];
+// GameMaker reports network transport state in `status` and the API response
+// code (such as 200 or 202) in `http_status`.
+var _transport_status = async_load[? "status"];
+var _status = ds_map_exists(async_load, "http_status") ? async_load[? "http_status"] : _transport_status;
 var _body = async_load[? "result"];
 var _response = undefined;
 if (is_string(_body) && string_length(_body) > 0) {
@@ -52,6 +55,7 @@ switch (account_request_kind) {
         break;
     case "login":
     case "refresh":
+        offline_mode = false;
         account_access_token = _response.accessToken;
         account_refresh_token = _response.refreshToken;
         account_save_refresh(account_refresh_token);

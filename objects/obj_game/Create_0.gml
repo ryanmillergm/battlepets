@@ -8,7 +8,13 @@ global.bp_self_tests_passed = bp_run_self_tests(catalog);
 account_id = "";
 account_username = "Guest";
 account_verified = false;
+offline_mode = false;
 account_api_url = "https://battlepets-staging.duckdns.org";
+if (file_exists("battlepets_local_server.ini")) {
+    ini_open("battlepets_local_server.ini");
+    account_api_url = ini_read_string("account", "api_url", account_api_url);
+    ini_close();
+}
 account_access_token = "";
 account_refresh_token = "";
 account_request_id = -1;
@@ -60,14 +66,30 @@ account_clear_refresh = function() {
     account_refresh_token = "";
 };
 
+enter_offline_guest = function() {
+    offline_mode = true;
+    account_id = "guest";
+    account_username = "Guest";
+    account_verified = false;
+    // Leave any saved online session on disk, but never use it during this
+    // temporary guest session.
+    account_access_token = "";
+    account_refresh_token = "";
+    battle_coins = 0;
+    account_busy = false;
+    account_message = "";
+    keyboard_string = "";
+    screen = "main";
+};
+
 ini_open("battlepets_save.ini");
 battle_coins = max(0, floor(ini_read_real("currency", "battle_coins", 0)));
 saved_bot_players = clamp(floor(ini_read_real("bot_setup", "players", 2)), 2, 8);
-saved_bot_team_size = clamp(floor(ini_read_real("bot_setup", "team_size", 2)), 2, 4);
+saved_bot_team_size = clamp(floor(ini_read_real("bot_setup", "team_size", 2)), 1, 3);
 saved_bot_difficulty = clamp(floor(ini_read_real("bot_setup", "difficulty", 0)), 0, 2);
 saved_bot_speed = clamp(floor(ini_read_real("bot_setup", "speed", 0)), 0, 2);
 saved_local_players = clamp(floor(ini_read_real("local_setup", "players", 2)), 2, 8);
-saved_local_team_size = clamp(floor(ini_read_real("local_setup", "team_size", 2)), 2, 4);
+saved_local_team_size = clamp(floor(ini_read_real("local_setup", "team_size", 2)), 1, 3);
 pet_quantities = [];
 for (var _inventory_load = 0; _inventory_load < array_length(catalog.pets); _inventory_load++) {
     var _loaded_quantity = max(0, floor(ini_read_real("inventory", catalog.pets[_inventory_load].id, 1)));
@@ -117,6 +139,7 @@ collection_cursor = 0;
 collection_scroll_row = 0;
 collection_return_screen = "setup";
 collection_context_seat = -1;
+collection_start_after_confirm = false;
 collection_slot_count = 12;
 hub_cursor = 1;
 trading_cursor = 0;
@@ -169,12 +192,14 @@ get_bot_think_delay = function() {
 };
 
 save_battle_coins = function() {
+    if (offline_mode) return;
     ini_open("battlepets_save.ini");
     ini_write_real("currency", "battle_coins", battle_coins);
     ini_close();
 };
 
 save_economy = function() {
+    if (offline_mode) return;
     ini_open("battlepets_save.ini");
     ini_write_real("currency", "battle_coins", battle_coins);
     for (var _save_pet = 0; _save_pet < array_length(catalog.pets); _save_pet++) {
@@ -237,26 +262,27 @@ trade_up_selected_total = function() {
     return _selected_total;
 };
 
-choose_weighted_reward = function(_candidates, _chance_space) {
+choose_weighted_reward = function(_candidates, _chance_space, _use_pack_chance) {
     if (array_length(_candidates) <= 0) return undefined;
     var _fixed_total = 0;
     var _ordinary = [];
     for (var _candidate_scan = 0; _candidate_scan < array_length(_candidates); _candidate_scan++) {
         var _candidate_index = _candidates[_candidate_scan];
-        var _fixed_chance = catalog.pets[_candidate_index].fixed_legendary_chance;
+        var _fixed_chance = _use_pack_chance ? catalog.pets[_candidate_index].legendary_pack_chance : catalog.pets[_candidate_index].fixed_legendary_chance;
         if (_fixed_chance > 0) _fixed_total += _fixed_chance; else array_push(_ordinary, _candidate_index);
     }
-    if (array_length(_ordinary) <= 0 || _fixed_total >= _chance_space) return _candidates[irandom(array_length(_candidates) - 1)];
+    if (_fixed_total <= 0) return _candidates[irandom(array_length(_candidates) - 1)];
     var _reward_roll = random(_chance_space);
     var _fixed_cursor = 0;
     for (var _fixed_scan = 0; _fixed_scan < array_length(_candidates); _fixed_scan++) {
         var _fixed_index = _candidates[_fixed_scan];
-        var _candidate_chance = catalog.pets[_fixed_index].fixed_legendary_chance;
+        var _candidate_chance = _use_pack_chance ? catalog.pets[_fixed_index].legendary_pack_chance : catalog.pets[_fixed_index].fixed_legendary_chance;
         if (_candidate_chance <= 0) continue;
         _fixed_cursor += _candidate_chance;
         if (_reward_roll < _fixed_cursor) return _fixed_index;
     }
-    return _ordinary[irandom(array_length(_ordinary) - 1)];
+    if (array_length(_ordinary) > 0) return _ordinary[irandom(array_length(_ordinary) - 1)];
+    return _candidates[array_length(_candidates) - 1];
 };
 
 perform_trade_up = function(_rarity) {
@@ -271,7 +297,7 @@ perform_trade_up = function(_rarity) {
     }
     if (array_length(_rewards) <= 0) return false;
     for (var _trade_remove_index = 0; _trade_remove_index < array_length(catalog.pets); _trade_remove_index++) pet_quantities[_trade_remove_index] -= trade_up_selected_counts[_trade_remove_index];
-    var _reward_index = _rarity + 1 == 3 ? choose_weighted_reward(_rewards, 100) : _rewards[irandom(array_length(_rewards) - 1)];
+    var _reward_index = _rarity + 1 == 3 ? choose_weighted_reward(_rewards, 100, false) : _rewards[irandom(array_length(_rewards) - 1)];
     pet_quantities[_reward_index] += 1;
     trade_up_reward_index = _reward_index;
     rebuild_owned_pet_ids();
@@ -289,7 +315,7 @@ draw_pack_pet = function(_pack, _excluded_id) {
         if (_draw_pet.rarity == _rarity && _draw_pet.id != _excluded_id && !_draw_pet.owner_only) array_push(_candidates, _draw_index);
     }
     if (array_length(_candidates) <= 0) return undefined;
-    var _chosen_index = _rarity == 3 ? choose_weighted_reward(_candidates, _pack.weights[_rarity]) : _candidates[irandom(array_length(_candidates) - 1)];
+    var _chosen_index = _rarity == 3 ? choose_weighted_reward(_candidates, _pack.weights[_rarity], true) : _candidates[irandom(array_length(_candidates) - 1)];
     return catalog.pets[_chosen_index].id;
 };
 
@@ -349,6 +375,7 @@ load_setup_for_mode = function(_mode) {
 };
 
 save_setup_for_mode = function(_mode) {
+    if (offline_mode) return;
     ini_open("battlepets_save.ini");
     if (_mode == "bot") {
         saved_bot_players = setup_players;
@@ -415,9 +442,10 @@ copy_lineup = function(_source) {
     return _result;
 };
 
-open_collection = function(_return_screen, _seat) {
+open_collection = function(_return_screen, _seat, _start_after_confirm) {
     collection_return_screen = _return_screen;
     collection_context_seat = _seat;
+    collection_start_after_confirm = _start_after_confirm;
     var _source = _seat >= 0 ? local_player_lineups[_seat] : bot_lineup_ids;
     if (array_length(_source) != setup_team_size) _source = default_lineup();
     collection_selected_ids = copy_lineup(_source);

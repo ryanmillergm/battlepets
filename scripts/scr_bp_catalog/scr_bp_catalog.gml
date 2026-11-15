@@ -14,9 +14,10 @@ function bp_pet_definition(_id, _name, _rarity, _health, _basic_name, _basic_dam
             stun: is_undefined(_super_stun) ? 0 : _super_stun,
             per_target_pet: is_undefined(_super_per_target_pet) ? false : _super_per_target_pet
         },
-        ability: _id == "ghost_axle" ? "Ghostability activates phasing: 70% of hostile damage attempts pass through" : (!is_undefined(_incoming_damage_chance) && _incoming_damage_chance < 100 ? "Ghost: hostile damage has only a " + string(_incoming_damage_chance) + "% chance to connect" : (_unblockable ? "Quick: basic attacks cannot be blocked" : "None")),
+        ability: _id == "ghost_axle" ? "Ghostability activates phasing: 70% of hostile damage attempts pass through" : (_id == "luna" ? "Luna Tuna Breath stuns its target and grants an extra turn" : (_id == "bailly" ? "Pretty Princess puts its target out until revived; Bailly then rests for 3 rounds" : (!is_undefined(_incoming_damage_chance) && _incoming_damage_chance < 100 ? "Ghost: hostile damage has only a " + string(_incoming_damage_chance) + "% chance to connect" : (_unblockable ? "Quick: basic attacks cannot be blocked" : "None")))),
         owner_only: is_undefined(_owner_only) ? false : _owner_only,
         fixed_legendary_chance: (_id == "axle" || _id == "porcha_mercadies") ? 1.5 : 0,
+        legendary_pack_chance: _id == "luna" ? 5 : (_id == "bailly" ? 2 : ((_id == "axle" || _id == "porcha_mercadies") ? 1.5 : 0)),
         incoming_damage_chance: is_undefined(_incoming_damage_chance) ? 100 : clamp(_incoming_damage_chance, 0, 100)
     };
 }
@@ -48,7 +49,7 @@ function bp_card_definition(_id, _name, _description, _effect, _amount) {
 
 function bp_catalog_create() {
     var _pets = [
-        bp_pet_definition("bailly", "Bailly", 2, 90, "Golden Kick", 16, "Sunburst", 34, ["fur"], Bailly, true),
+        bp_pet_definition("bailly", "Bailly", 3, 90, "Begging", 45, "Pretty Princess", 0, ["dog", "fur"], Bailly, false),
         bp_pet_definition("porcha_mercadies", "Porcha & Mercadies", 3, 160, "Aggressive", 50, "Double Hair", 70, ["cat", "fur"], BPPorchaandMercadies, false, 1),
         bp_pet_definition("ember", "Ember (Placeholder)", 0, 82, "Spark", 18, "Firework", 36, ["fur"], -1, false),
         bp_pet_definition("moss", "Moss (Placeholder)", 1, 125, "Bramble", 13, "Overgrowth", 28, ["plant"], -1, false),
@@ -56,6 +57,7 @@ function bp_catalog_create() {
         bp_pet_definition("axle", "Axle", 3, 130, "Tail Whip", 45, "Multistrike", 40, ["dog", "fur"], Axle, false, 0, true),
         bp_pet_definition("whisk", "Whisk (Placeholder)", 1, 78, "Swipe", 19, "Nine Lives", 35, ["cat", "fur"], -1, true),
         bp_pet_definition("sprout", "Sprout (Placeholder)", 0, 115, "Seed Pop", 14, "Bloom Blast", 32, ["plant"], -1, false),
+        bp_pet_definition("luna", "Luna", 3, 105, "Jump Kick", 25, "Luna Tuna Breath", 70, ["dog", "fur"], Luna, false, 1),
         bp_pet_definition("ghost_axle", "Ghost Axle", 4, 150, "InvisiCrunch", 50, "Ghostability", 70, ["dog", "ghost", "fur"], GhostAxle, false, 0, false, true, 100)
     ];
 
@@ -71,7 +73,7 @@ function bp_catalog_create() {
         bp_pack_definition("basic", "Basic Battlepet Pack", 30, 0, [100, 0, 0, 0], make_color_rgb(95, 170, 105), Battlepetpack),
         bp_pack_definition("uncommon", "Uncommon Battlepet Pack", 50, 1, [45, 55, 0, 0], make_color_rgb(70, 145, 220), uncommonbattlepetpack),
         bp_pack_definition("epic", "Epic Battlepet Pack", 75, 2, [30, 50, 20, 0], make_color_rgb(155, 85, 205), Epicbattlepetpack_runtime),
-        bp_pack_definition("legendary", "Legendary Battlepet Pack", 100, 3, [25, 40, 32, 3], make_color_rgb(220, 155, 35), Legendarybattlepetpack)
+        bp_pack_definition("legendary", "Legendary Battlepet Pack", 100, 3, [23, 37, 30, 10], make_color_rgb(220, 155, 35), Legendarybattlepetpack)
     ];
 
     return { pets: _pets, cards: _cards, packs: _packs, version: 3 };

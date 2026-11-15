@@ -18,6 +18,7 @@ const refreshSchema = z.object({ refreshToken: z.string().min(20).max(300) });
 const forgotSchema = z.object({ email: emailSchema });
 const resetSchema = z.object({ email: emailSchema, code: codeSchema, password: passwordSchema });
 const profileSchema = z.object({ displayName: displayNameSchema });
+const OWNER_INVITE_LABEL = "owner bootstrap";
 
 function hash(value: string): string { return createHash("sha256").update(value).digest("hex"); }
 function code(): string { return randomInt(0, 1_000_000).toString().padStart(6, "0"); }
@@ -47,20 +48,32 @@ export function registerAuthRoutes(app: FastifyInstance, db: PrismaClient, confi
   app.post("/v1/auth/register", { config: { rateLimit: { max: 5, timeWindow: "15 minutes" } } }, async (request, reply) => {
     const input = registerSchema.parse(request.body);
     if (config.REGISTRATION_MODE === "closed") return reply.code(403).send({ code: "REGISTRATION_CLOSED" });
-    if (input.username.toLowerCase() === "glitch") return reply.code(409).send({ code: "USERNAME_UNAVAILABLE" });
+    const normalizedUsername = input.username.toLowerCase();
     const inviteHash = input.inviteCode ? hash(input.inviteCode.trim()) : "";
     const verificationCode = code();
     const passwordHash = await argon2.hash(input.password);
     try {
       const account = await db.$transaction(async (tx) => {
+        let invitation: { id: string; label: string | null } | null = null;
+        if (config.REGISTRATION_MODE === "invite") {
+          invitation = await tx.invitation.findFirst({
+            where: { codeHash: inviteHash, usedAt: null, expiresAt: { gt: new Date() } },
+            select: { id: true, label: true },
+          });
+          if (!invitation) throw new Error("INVALID_INVITE");
+        }
+        const ownerInvite = invitation?.label === OWNER_INVITE_LABEL;
+        if ((ownerInvite && normalizedUsername !== "glitch") || (!ownerInvite && normalizedUsername === "glitch")) {
+          throw new Error("USERNAME_UNAVAILABLE");
+        }
         const created = await tx.account.create({ data: {
           email: input.email,
           passwordHash,
-          profiles: { create: { username: input.username, normalizedUsername: input.username.toLowerCase(), displayName: input.displayName, avatarId: "default", ageBand: "UNSPECIFIED" } },
+          profiles: { create: { username: input.username, normalizedUsername, displayName: input.displayName, avatarId: "default", ageBand: "UNSPECIFIED" } },
           emailTokens: { create: { tokenHash: hash(`${input.email}:${verificationCode}`), expiresAt: expiresIn(15) } },
         } });
         if (config.REGISTRATION_MODE === "invite") {
-          const claimed = await tx.invitation.updateMany({ where: { codeHash: inviteHash, usedAt: null, expiresAt: { gt: new Date() } }, data: { usedAt: new Date(), usedById: created.id } });
+          const claimed = await tx.invitation.updateMany({ where: { id: invitation!.id, usedAt: null }, data: { usedAt: new Date(), usedById: created.id } });
           if (claimed.count !== 1) throw new Error("INVALID_INVITE");
         }
         return created;
@@ -69,6 +82,7 @@ export function registerAuthRoutes(app: FastifyInstance, db: PrismaClient, confi
       return reply.code(202).send({ status: "verification_required" });
     } catch (error) {
       if (error instanceof Error && error.message === "INVALID_INVITE") return reply.code(403).send({ code: "INVALID_INVITE" });
+      if (error instanceof Error && error.message === "USERNAME_UNAVAILABLE") return reply.code(409).send({ code: "USERNAME_UNAVAILABLE" });
       request.log.warn({ err: error }, "registration rejected");
       return reply.code(409).send({ code: "ACCOUNT_OR_USERNAME_UNAVAILABLE" });
     }

@@ -85,6 +85,7 @@ if (string_pos("account_", screen) == 1) {
         draw_set_color(make_color_rgb(80, 175, 135)); draw_roundrect(555, 575, 790, 635, false); draw_set_color(c_white); draw_text(672, 605, "F2 - SIGN UP");
         draw_set_color(make_color_rgb(95, 108, 132)); draw_roundrect(810, 575, 1045, 635, false); draw_set_color(c_white); draw_text(927, 605, "F3 - OFFLINE");
         draw_set_color(make_color_rgb(75, 88, 112)); draw_roundrect(650, 660, 950, 715, false); draw_set_color(c_white); draw_text(_gw * 0.5, 687, "F5 - FORGOT PASSWORD");
+        draw_set_color(make_color_rgb(70, 145, 220)); draw_roundrect(650, 735, 950, 790, false); draw_set_color(c_white); draw_text(_gw * 0.5, 762, "F6 - VERIFY EMAIL");
     } else if (screen == "account_signup") {
         draw_text_transformed(_gw * 0.5, 165, "CREATE TEST ACCOUNT", 1.5, 1.5, 0);
         var _signup_labels = ["INVITE CODE", "EMAIL", "PASSWORD (10+ CHARACTERS)", "UNIQUE USERNAME", "DISPLAY NAME"];
@@ -285,12 +286,14 @@ if (screen == "pack_shop") {
                 for (var _odds_count_pet = 0; _odds_count_pet < array_length(catalog.pets); _odds_count_pet++) {
                     var _odds_count_definition = catalog.pets[_odds_count_pet];
                     if (_odds_count_definition.rarity != _odds_rarity || _odds_count_definition.owner_only) continue;
-                    if (_odds_count_definition.fixed_legendary_chance > 0) _odds_fixed_total += _odds_count_definition.fixed_legendary_chance; else _odds_ordinary_count += 1;
+                    var _odds_exact_chance = _odds_rarity == 3 ? _odds_count_definition.legendary_pack_chance : 0;
+                    if (_odds_exact_chance > 0) _odds_fixed_total += _odds_exact_chance; else _odds_ordinary_count += 1;
                 }
                 for (var _odds_pet = 0; _odds_pet < array_length(catalog.pets); _odds_pet++) {
                     if (catalog.pets[_odds_pet].rarity == _odds_rarity && !catalog.pets[_odds_pet].owner_only) {
                         if (_pet_odds_text != "") _pet_odds_text += ", ";
-                        var _display_pet_chance = catalog.pets[_odds_pet].fixed_legendary_chance > 0 ? catalog.pets[_odds_pet].fixed_legendary_chance : max(0, _confirm_pack.weights[_odds_rarity] - _odds_fixed_total) / max(1, _odds_ordinary_count);
+                        var _display_exact_chance = _odds_rarity == 3 ? catalog.pets[_odds_pet].legendary_pack_chance : 0;
+                        var _display_pet_chance = _display_exact_chance > 0 ? _display_exact_chance : max(0, _confirm_pack.weights[_odds_rarity] - _odds_fixed_total) / max(1, _odds_ordinary_count);
                         _pet_odds_text += string_replace(catalog.pets[_odds_pet].name, " (Placeholder)", "") + " " + string_format(_display_pet_chance, 0, 1) + "%";
                     }
                 }
@@ -556,31 +559,59 @@ if (screen == "trade_up_reward") {
 if (screen == "setup") {
     var _difficulty_names = ["Easy", "Normal", "Hard"];
     var _bot_speed_names = ["Relaxed", "Normal", "Quick"];
-    if (play_mode == "local") draw_clear(c_white);
-    draw_set_color(play_mode == "bot" ? make_color_rgb(75, 175, 255) : make_color_rgb(255, 210, 70));
-    draw_text_transformed(_gw * 0.5, 150, string_upper(play_mode) + " BATTLE SETUP", 2, 2, 0);
+    draw_clear(c_white);
+    draw_set_color(play_mode == "bot" ? make_color_rgb(45, 145, 225) : make_color_rgb(210, 160, 20));
+    draw_text_transformed(_gw * 0.5, 78, string_upper(play_mode) + " BATTLE SETUP", 2, 2, 0);
 
-    draw_set_color(play_mode == "local" ? make_color_rgb(75, 88, 112) : make_color_rgb(150, 170, 205));
-    draw_text_transformed(_gw * 0.5, 265, "CHOOSE NUMBER OF PLAYERS", 1.1, 1.1, 0);
-    draw_set_color(play_mode == "local" ? make_color_rgb(13, 20, 38) : c_white);
-    draw_text_transformed(_gw * 0.5, 315, "Players: " + string(setup_players) + "   (UP / DOWN)", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(75, 88, 112));
+    draw_text(_gw * 0.5, 130, "CHOOSE NUMBER OF PLAYERS");
+    draw_set_color(make_color_rgb(235, 240, 247));
+    draw_roundrect(570, 145, 1030, 205, false);
+    draw_set_color(make_color_rgb(35, 48, 70));
+    draw_text_transformed(_gw * 0.5, 175, "-     " + string(setup_players) + " PLAYERS     +", 1.3, 1.3, 0);
 
-    draw_set_color(play_mode == "local" ? make_color_rgb(75, 88, 112) : make_color_rgb(150, 170, 205));
-    draw_text_transformed(_gw * 0.5, 395, "CHOOSE NUMBER OF PETS", 1.1, 1.1, 0);
-    draw_set_color(play_mode == "local" ? make_color_rgb(13, 20, 38) : c_white);
-    draw_text_transformed(_gw * 0.5, 445, "Pets each: " + string(setup_team_size) + "   (LEFT / RIGHT)", 1.5, 1.5, 0);
+    draw_set_color(make_color_rgb(75, 88, 112));
+    draw_text_transformed(_gw * 0.5, 245, "HOW MANY PETS PER PLAYER?", 1.2, 1.2, 0);
+
+    for (var _team_option = 1; _team_option <= 3; _team_option++) {
+        var _team_card_x = 100 + (_team_option - 1) * 500;
+        var _team_selected = setup_team_size == _team_option;
+        draw_set_color(make_color_rgb(218, 225, 235));
+        draw_roundrect(_team_card_x + 6, 293, _team_card_x + 406, 558, false);
+        draw_set_color(_team_selected ? make_color_rgb(238, 252, 243) : c_white);
+        draw_roundrect(_team_card_x, 285, _team_card_x + 400, 550, false);
+        draw_set_color(_team_selected ? make_color_rgb(40, 175, 90) : make_color_rgb(195, 207, 223));
+        draw_roundrect(_team_card_x, 285, _team_card_x + 400, 550, true);
+        draw_set_color(_team_selected ? make_color_rgb(25, 145, 75) : make_color_rgb(45, 60, 82));
+        draw_text_transformed(_team_card_x + 200, 320, string(_team_option) + (_team_option == 1 ? " PET" : " PETS"), 1.45, 1.45, 0);
+
+        if (_team_option == 1) {
+            draw_pet_sprite_fit(Bailly, _team_card_x + 125, 350, 150, 135, 1);
+        } else if (_team_option == 2) {
+            draw_pet_sprite_fit(Axle, _team_card_x + 45, 365, 140, 120, 1);
+            draw_pet_sprite_fit(Sprite9, _team_card_x + 215, 365, 140, 120, 1);
+        } else {
+            draw_pet_sprite_fit(GhostAxle, _team_card_x + 25, 370, 105, 110, 1);
+            draw_pet_sprite_fit(BPPorchaandMercadies, _team_card_x + 147, 370, 105, 110, 1);
+            draw_pet_sprite_fit(Bailly, _team_card_x + 270, 370, 105, 110, 1);
+        }
+    }
 
     if (play_mode == "bot") {
-        draw_text_transformed(_gw * 0.5, 525, "Bot level: " + _difficulty_names[setup_difficulty] + "   (D)", 1.5, 1.5, 0);
-        draw_text_transformed(_gw * 0.5, 585, "Bot turn speed: " + _bot_speed_names[setup_bot_speed] + "   (S)", 1.5, 1.5, 0);
+        draw_set_color(make_color_rgb(235, 240, 247)); draw_roundrect(420, 580, 1180, 625, false);
+        draw_set_color(make_color_rgb(45, 60, 82)); draw_text(_gw * 0.5, 602, "BOT LEVEL: " + string_upper(_difficulty_names[setup_difficulty]) + "   - CLICK TO CHANGE");
+        draw_set_color(make_color_rgb(235, 240, 247)); draw_roundrect(420, 630, 1180, 675, false);
+        draw_set_color(make_color_rgb(45, 60, 82)); draw_text(_gw * 0.5, 652, "BOT TURN SPEED: " + string_upper(_bot_speed_names[setup_bot_speed]) + "   - CLICK TO CHANGE");
+        draw_set_color(make_color_rgb(225, 247, 235)); draw_roundrect(520, 680, 1080, 725, false);
+        draw_set_color(make_color_rgb(25, 145, 75)); draw_text(_gw * 0.5, 702, "CHOOSE YOUR BATTLEPETS");
     }
-    if (play_mode == "bot") {
-        draw_set_color(make_color_rgb(25, 155, 85));
-        draw_text_transformed(_gw * 0.5, 640, "C - CHOOSE BATTLEPETS", 1.25, 1.25, 0);
-    }
-    draw_set_color(play_mode == "local" ? make_color_rgb(25, 155, 85) : make_color_rgb(110, 235, 155));
-    draw_text_transformed(_gw * 0.5, play_mode == "bot" ? 715 : 650, "ENTER - START", 1.5, 1.5, 0);
-    if (economy_message != "") { draw_set_color(make_color_rgb(255, 120, 105)); draw_text(_gw * 0.5, 790, economy_message); }
+
+    var _start_y = play_mode == "bot" ? 750 : 620;
+    draw_set_color(make_color_rgb(35, 165, 85));
+    draw_roundrect(560, _start_y, 1040, _start_y + 65, false);
+    draw_set_color(c_white);
+    draw_text_transformed(_gw * 0.5, _start_y + 32, "START BATTLE", 1.35, 1.35, 0);
+    if (economy_message != "") { draw_set_color(make_color_rgb(210, 65, 60)); draw_text(_gw * 0.5, 850, economy_message); }
     exit;
 }
 
@@ -649,8 +680,8 @@ if (screen == "collection") {
             draw_set_color(make_color_rgb(75, 88, 112));
             var _collection_health_text = "HEALTH  " + string(_collection_pet.max_health);
             var _collection_basic_text = "BASIC   " + _collection_pet.basic.name + "  " + string(_collection_pet.basic.damage);
-            var _collection_super_damage = _collection_pet.super.per_target_pet ? string(_collection_pet.super.damage) + " x opposing pets" : string(_collection_pet.super.damage);
-            var _collection_super_text = "SUPER   " + _collection_pet.super.name + "  " + _collection_super_damage + (_collection_pet.id == "ghost_axle" ? " + 70% PHASE" : "") + (_collection_pet.super.stun > 0 ? " + STUN" : "");
+            var _collection_super_damage = _collection_pet.id == "bailly" ? "SLEEP; RESTS 3 ROUNDS" : (_collection_pet.super.per_target_pet ? string(_collection_pet.super.damage) + " x opposing pets" : string(_collection_pet.super.damage));
+            var _collection_super_text = "SUPER   " + _collection_pet.super.name + "  " + _collection_super_damage + (_collection_pet.id == "ghost_axle" ? " + 70% PHASE" : "") + (_collection_pet.super.stun > 0 ? " + STUN" : "") + (_collection_pet.id == "luna" ? " + EXTRA TURN" : "");
             var _collection_tags_text = "TAGS    " + string(_collection_pet.tags);
             var _collection_health_scale = fit_text_scale(_collection_health_text, _collection_text_width, 1);
             var _collection_basic_scale = fit_text_scale(_collection_basic_text, _collection_text_width, 1);
@@ -775,6 +806,19 @@ if (screen == "handoff") {
 }
 
 if (screen == "result") {
+    if (tutorial) {
+        var _tutorial_won = match.winner == 0;
+        draw_clear(c_white);
+        draw_set_color(_tutorial_won ? make_color_rgb(35, 175, 85) : make_color_rgb(215, 65, 65));
+        draw_text_transformed(_gw * 0.5, 330, _tutorial_won ? "YOU WON!" : "YOU LOST", 3, 3, 0);
+        draw_set_color(make_color_rgb(45, 60, 82));
+        draw_text_transformed(_gw * 0.5, 470, _tutorial_won ? "Great job finishing the tutorial!" : "Good try! You can play the tutorial again anytime.", 1.25, 1.25, 0);
+        draw_set_color(make_color_rgb(35, 145, 225));
+        draw_roundrect(_gw * 0.5 - 270, 565, _gw * 0.5 + 270, 640, false);
+        draw_set_color(c_white);
+        draw_text_transformed(_gw * 0.5, 602, "RETURN TO MAIN MENU", 1.35, 1.35, 0);
+        exit;
+    }
     draw_set_color(make_color_rgb(255, 210, 70));
     draw_text_transformed(_gw * 0.5, 300, match.last_message, 2, 2, 0);
     draw_set_color(c_white);
@@ -879,7 +923,10 @@ if (screen == "battle") {
     }
 
     // Mouse-first action tray: choose an attack, then click an opposing pet.
-    var _tray_pet = match.players[_current_index].pets[selected_actor];
+    // A final knockout can leave selected_actor at -1 while its combat message is still visible.
+    var _tray_pet_count = array_length(match.players[_current_index].pets);
+    var _tray_pet_slot = clamp(selected_actor, 0, max(0, _tray_pet_count - 1));
+    var _tray_pet = match.players[_current_index].pets[_tray_pet_slot];
     var _battle_button_names = [
         _tray_pet.definition.basic.name + "  -  " + string(_tray_pet.definition.basic.damage + _tray_pet.attack_bonus) + " DAMAGE",
         _tray_pet.definition.super.name + "  -  " + string(_tray_pet.definition.super.damage + _tray_pet.attack_bonus) + " DAMAGE" + (_tray_pet.super_used ? " (USED)" : ""),
@@ -974,8 +1021,8 @@ if (screen == "battle") {
                 var _compact_basic_scale = fit_text_scale(_compact_basic_text, _compact_text_width, 0.76);
                 draw_text_transformed(_cx + 57, _cy + 27, _compact_basic_text, _compact_basic_scale, _compact_basic_scale, 0);
                 draw_set_color(_pet.super_used ? make_color_rgb(125, 130, 145) : make_color_rgb(255, 220, 105));
-                var _compact_super_damage = _pet.definition.super.per_target_pet ? string(_pet.definition.super.damage) + "x PETS" : string(_pet.definition.super.damage + _pet.attack_bonus);
-                var _compact_super_text = "2 " + _pet.definition.super.name + "  " + _compact_super_damage + (_pet.definition.super.stun > 0 ? " +STUN" : "");
+                var _compact_super_damage = _pet.definition.id == "bailly" ? "SLEEP; REST 3" : (_pet.definition.super.per_target_pet ? string(_pet.definition.super.damage) + "x PETS" : string(_pet.definition.super.damage + _pet.attack_bonus));
+                var _compact_super_text = "2 " + _pet.definition.super.name + "  " + _compact_super_damage + (_pet.definition.super.stun > 0 ? " +STUN" : "") + (_pet.definition.id == "luna" ? " +TURN" : "");
                 var _compact_super_scale = fit_text_scale(_compact_super_text, _compact_text_width, 0.76);
                 draw_text_transformed(_cx + 57, _cy + 46, _compact_super_text, _compact_super_scale, _compact_super_scale, 0);
                 if (_pet.ghostability_active) { draw_set_color(make_color_rgb(205, 240, 255)); draw_text_transformed(_cx + 57, _cy + 62, "PHASING ACTIVE", 0.62, 0.62, 0); }
@@ -1008,8 +1055,8 @@ if (screen == "battle") {
                 var _tall_basic_scale = fit_text_scale(_tall_basic_text, _card_width - 14, 1);
                 draw_text_transformed(_cx + _card_width * 0.5, _cy + 105, _tall_basic_text, _tall_basic_scale, _tall_basic_scale, 0);
                 draw_set_color(_pet.super_used ? make_color_rgb(125, 130, 145) : make_color_rgb(255, 220, 105));
-                var _tall_super_damage = _pet.definition.super.per_target_pet ? string(_pet.definition.super.damage) + " x PETS" : string(_pet.definition.super.damage + _pet.attack_bonus);
-                var _tall_super_text = "2 " + _pet.definition.super.name + "  " + _tall_super_damage + (_pet.definition.super.stun > 0 ? " + STUN" : "");
+                var _tall_super_damage = _pet.definition.id == "bailly" ? "SLEEP; RESTS 3 ROUNDS" : (_pet.definition.super.per_target_pet ? string(_pet.definition.super.damage) + " x PETS" : string(_pet.definition.super.damage + _pet.attack_bonus));
+                var _tall_super_text = "2 " + _pet.definition.super.name + "  " + _tall_super_damage + (_pet.definition.super.stun > 0 ? " + STUN" : "") + (_pet.definition.id == "luna" ? " + EXTRA TURN" : "");
                 var _tall_super_scale = fit_text_scale(_tall_super_text, _card_width - 14, 1);
                 draw_text_transformed(_cx + _card_width * 0.5, _cy + 130, _tall_super_text, _tall_super_scale, _tall_super_scale, 0);
                 if (_pet.ghostability_active) { draw_set_color(make_color_rgb(205, 240, 255)); draw_text_transformed(_cx + _card_width * 0.5, _cy + 146, "PHASING ACTIVE - 70% AVOID", 0.65, 0.65, 0); }
@@ -1042,7 +1089,7 @@ if (screen == "battle") {
                 if (_selected_pet.definition.super.per_target_pet && selected_target >= 0) {
                     _selected_super_damage *= bp_player_living_pet_count(match.players[selected_target div _team_size]);
                 }
-                _selection_text = _selected_pet.definition.super.name + " - " + string(_selected_super_damage + _selected_pet.attack_bonus) + " damage" + (_selected_pet.definition.id == "ghost_axle" ? " + activates 70% hostile-damage phasing" : "") + (_selected_pet.definition.super.per_target_pet ? " (40 x living opposing pets)" : "") + (_selected_pet.definition.super.stun > 0 ? " + stun next turn" : "");
+                _selection_text = _selected_pet.definition.id == "bailly" ? "Pretty Princess - target sleeps until revived; Bailly rests 3 rounds but can be attacked" : (_selected_pet.definition.super.name + " - " + string(_selected_super_damage + _selected_pet.attack_bonus) + " damage" + (_selected_pet.definition.id == "ghost_axle" ? " + activates 70% hostile-damage phasing" : "") + (_selected_pet.definition.super.per_target_pet ? " (40 x living opposing pets)" : "") + (_selected_pet.definition.super.stun > 0 ? " + stun next turn" : "") + (_selected_pet.definition.id == "luna" ? " + extra turn" : ""));
             } else {
                 _selection_text = _selected_pet.definition.basic.name + " - " + string(_selected_pet.definition.basic.damage + _selected_pet.attack_bonus) + " damage";
             }
@@ -1119,9 +1166,9 @@ if (screen == "battle") {
         draw_text(_gw * 0.5, 305, (_details_are_actor ? "YOUR ACTING PET" : "TARGET PET") + " - " + _detail_owner.name);
         draw_text(_gw * 0.5, 335, "Health: " + string(_detail_pet.health) + "/" + string(_detail_pet.definition.max_health) + "    Tags: " + string(_detail_pet.definition.tags));
         draw_text_transformed(_gw * 0.5, 395, "BASIC - " + _detail_pet.definition.basic.name + " - " + string(_detail_pet.definition.basic.damage + _detail_pet.attack_bonus) + " damage", 1.35, 1.35, 0);
-        var _detail_super_damage = _detail_pet.definition.super.per_target_pet ? string(_detail_pet.definition.super.damage) + " x TARGET'S LIVING PETS" : string(_detail_pet.definition.super.damage + _detail_pet.attack_bonus) + " damage";
+        var _detail_super_damage = _detail_pet.definition.id == "bailly" ? "SLEEP; BAILLY RESTS 3 ROUNDS (TARGETABLE)" : (_detail_pet.definition.super.per_target_pet ? string(_detail_pet.definition.super.damage) + " x TARGET'S LIVING PETS" : string(_detail_pet.definition.super.damage + _detail_pet.attack_bonus) + " damage");
         var _detail_super_effect = _detail_pet.definition.id == "ghost_axle" ? " + ACTIVATES 70% PHASING" : "";
-        var _detail_super_text = "SUPER - " + _detail_pet.definition.super.name + " - " + _detail_super_damage + _detail_super_effect + (_detail_pet.definition.super.stun > 0 ? " + STUN NEXT TURN" : "") + (_detail_pet.super_used ? " (USED)" : " (ONCE PER MATCH)");
+        var _detail_super_text = "SUPER - " + _detail_pet.definition.super.name + " - " + _detail_super_damage + _detail_super_effect + (_detail_pet.definition.super.stun > 0 ? " + STUN NEXT TURN" : "") + (_detail_pet.definition.id == "luna" ? " + EXTRA TURN" : "") + (_detail_pet.super_used ? " (USED)" : " (ONCE PER MATCH)");
         var _detail_super_scale = fit_text_scale(_detail_super_text, 650, 1.35);
         draw_text_transformed(_gw * 0.5, 450, _detail_super_text, _detail_super_scale, _detail_super_scale, 0);
         if (_detail_pet.ghostability_active) { draw_set_color(make_color_rgb(205, 240, 255)); draw_text(_gw * 0.5, 485, "PHASING ACTIVE: 70% chance hostile damage does nothing"); }

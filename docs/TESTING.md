@@ -17,6 +17,8 @@ npm run db:generate
 
 Authentication integration tests run when PostgreSQL is available:
 
+The test suite deletes all account data in its target database and refuses to run unless the database name ends in `_test`. Never point it at the development or production database.
+
 ```powershell
 $env:DATABASE_URL='postgresql://battlepets:local-password@localhost:5432/battlepets_test'
 $env:RUN_DATABASE_TESTS='true'
@@ -35,9 +37,14 @@ npm run build
 
 ## Local smoke test
 
-1. Start PostgreSQL and Mailpit with `docker compose up -d postgres mailpit`.
-2. Start the server with `npm run dev` in `server/`.
-3. Request `http://localhost:3000/health` and confirm an `ok` response.
+1. Copy `.env.example` to the ignored root `.env`, choose a database password, and set `POSTGRES_PORT=5433` if Windows already has PostgreSQL on port 5432. Use that same port in `server/.env`'s `DATABASE_URL`.
+2. Start PostgreSQL and Mailpit with `docker compose up -d postgres mailpit`, then run `npm run db:deploy` and `npm run build` in `server/`.
+3. Start the server with `npm start` in `server/`. Mailpit displays local-only verification messages at `http://127.0.0.1:8025`.
+4. For an installed local test client, copy `tools/battlepets_local_server.ini.example` to `%LOCALAPPDATA%\battlepets\battlepets_local_server.ini`. GameMaker's file sandbox reads this save folder rather than the executable folder. Without that file, the client safely keeps its staging URL.
+5. Create single-use invitations only after building the server: `npm run invite:create -- 7 owner` reserves the username `Glitch`; `npm run invite:create -- 7 tester` creates an ordinary test invite. Never publish either code.
+6. After the Glitch account is email-verified, run `npm run owner:lookup -- guardian-email@example.com`, copy the emitted UUID into ignored `server/.env` as `OWNER_ACCOUNT_ID`, and restart the server. Only that account ID receives the verified badge.
+7. Request `http://localhost:3000/health` and confirm an `ok` response.
+8. Choose Offline and confirm the profile name is `Guest`, the starting balance is 0 Battle Coins, and there is no verified badge. Change coins, inventory, or setup selections, close the game, reopen Offline, and confirm none of those guest-session changes were saved. Confirm an online login still saves its session normally.
 4. Start the dashboard with `npm run dev` in `admin/` and confirm its API indicator becomes green.
 5. Run the GameMaker Windows target and confirm its self-test message.
 6. On the main menu, click `FULLSCREEN` and confirm true fullscreen mode opens and the button changes to `WINDOWED`; confirm the button is hidden on every other screen, returning to the main menu restores access to it, and the 1600x900 GUI layout remains intact. Repeat the mode toggle with `F11` and `Alt+Enter`.
