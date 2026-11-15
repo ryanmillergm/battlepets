@@ -1,3 +1,64 @@
+if (string_pos("account_", screen) == 1) {
+    if (screen == "account_login") {
+        if (account_field == 0) account_email = string_copy(keyboard_string, 1, 254); else account_password = string_copy(keyboard_string, 1, 128);
+        if (keyboard_check_pressed(vk_tab)) { account_field = 1 - account_field; account_set_keyboard(); }
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("login", "/v1/auth/login", { email: account_email, password: account_password }, "");
+        if (keyboard_check_pressed(vk_f2)) { screen = "account_signup"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (keyboard_check_pressed(vk_f3)) enter_offline_guest();
+        if (keyboard_check_pressed(vk_f5)) { screen = "account_forgot"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (keyboard_check_pressed(vk_f6)) { screen = "account_verify"; account_code = ""; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _login_x = device_mouse_x_to_gui(0); var _login_y = device_mouse_y_to_gui(0);
+            if (_login_y >= 285 && _login_y <= 345) { account_field = 0; account_set_keyboard(); }
+            if (_login_y >= 370 && _login_y <= 430) { account_field = 1; account_set_keyboard(); }
+            if (_login_x >= 555 && _login_x <= 1045 && _login_y >= 485 && _login_y <= 545 && !account_busy) account_send("login", "/v1/auth/login", { email: account_email, password: account_password }, "");
+            if (_login_x >= 555 && _login_x <= 790 && _login_y >= 575 && _login_y <= 635) { screen = "account_signup"; account_field = 0; account_message = ""; account_set_keyboard(); }
+            if (_login_x >= 810 && _login_x <= 1045 && _login_y >= 575 && _login_y <= 635) enter_offline_guest();
+            if (_login_x >= 650 && _login_x <= 950 && _login_y >= 660 && _login_y <= 715) { screen = "account_forgot"; account_field = 0; account_message = ""; account_set_keyboard(); }
+            if (_login_x >= 650 && _login_x <= 950 && _login_y >= 735 && _login_y <= 790) { screen = "account_verify"; account_code = ""; account_message = ""; account_set_keyboard(); }
+        }
+    } else if (screen == "account_signup") {
+        if (account_field == 0) account_invite = string_copy(keyboard_string, 1, 128);
+        if (account_field == 1) account_email = string_copy(keyboard_string, 1, 254);
+        if (account_field == 2) account_password = string_copy(keyboard_string, 1, 128);
+        if (account_field == 3) account_new_username = string_copy(keyboard_string, 1, 20);
+        if (account_field == 4) account_display_name = string_copy(keyboard_string, 1, 24);
+        if (keyboard_check_pressed(vk_tab)) { account_field = (account_field + 1) mod 5; account_set_keyboard(); }
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("register", "/v1/auth/register", { inviteCode: account_invite, email: account_email, password: account_password, username: account_new_username, displayName: account_display_name }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _signup_y = device_mouse_y_to_gui(0);
+            for (var _signup_field = 0; _signup_field < 5; _signup_field++) if (_signup_y >= 230 + _signup_field * 82 && _signup_y <= 288 + _signup_field * 82) { account_field = _signup_field; account_set_keyboard(); }
+            if (_signup_y >= 665 && _signup_y <= 725 && !account_busy) account_send("register", "/v1/auth/register", { inviteCode: account_invite, email: account_email, password: account_password, username: account_new_username, displayName: account_display_name }, "");
+        }
+    } else if (screen == "account_verify") {
+        account_code = string_copy(keyboard_string, 1, 6);
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("verify", "/v1/auth/verify-email", { email: account_email, code: account_code }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _verify_y = device_mouse_y_to_gui(0);
+            if (_verify_y >= 470 && _verify_y <= 535 && !account_busy) account_send("verify", "/v1/auth/verify-email", { email: account_email, code: account_code }, "");
+        }
+    } else if (screen == "account_forgot") {
+        account_email = string_copy(keyboard_string, 1, 254);
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("forgot", "/v1/auth/forgot-password", { email: account_email }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left) && device_mouse_y_to_gui(0) >= 470 && device_mouse_y_to_gui(0) <= 535 && !account_busy) account_send("forgot", "/v1/auth/forgot-password", { email: account_email }, "");
+    } else if (screen == "account_reset") {
+        if (account_field == 0) account_code = string_copy(keyboard_string, 1, 6); else account_new_password = string_copy(keyboard_string, 1, 128);
+        if (keyboard_check_pressed(vk_tab)) { account_field = 1 - account_field; account_set_keyboard(); }
+        if (!account_busy && keyboard_check_pressed(vk_enter)) account_send("reset", "/v1/auth/reset-password", { email: account_email, code: account_code, password: account_new_password }, "");
+        if (keyboard_check_pressed(vk_escape)) { screen = "account_login"; account_field = 0; account_message = ""; account_set_keyboard(); }
+        if (mouse_check_button_pressed(mb_left)) {
+            var _reset_y = device_mouse_y_to_gui(0);
+            if (_reset_y >= 300 && _reset_y <= 365) { account_field = 0; account_set_keyboard(); }
+            if (_reset_y >= 400 && _reset_y <= 465) { account_field = 1; account_set_keyboard(); }
+            if (_reset_y >= 535 && _reset_y <= 600 && !account_busy) account_send("reset", "/v1/auth/reset-password", { email: account_email, code: account_code, password: account_new_password }, "");
+        }
+    }
+    exit;
+}
+
 var _fullscreen_click = false;
 if (screen == "main" && mouse_check_button_pressed(mb_left)) {
     var _fullscreen_mx = device_mouse_x_to_gui(0);
@@ -6,6 +67,19 @@ if (screen == "main" && mouse_check_button_pressed(mb_left)) {
 }
 if (_fullscreen_click || keyboard_check_pressed(vk_f11)) {
     window_set_fullscreen(!window_get_fullscreen());
+}
+
+if (screen == "main" && account_refresh_token != "" && (keyboard_check_pressed(vk_f4) || (mouse_check_button_pressed(mb_left) && device_mouse_x_to_gui(0) >= 1360 && device_mouse_x_to_gui(0) <= 1580 && device_mouse_y_to_gui(0) >= 75 && device_mouse_y_to_gui(0) <= 120))) {
+    account_send("logout", "/v1/auth/logout", { refreshToken: account_refresh_token }, "");
+    account_clear_refresh();
+    account_access_token = "";
+    account_id = "";
+    account_username = "Guest";
+    account_verified = false;
+    account_field = 0;
+    keyboard_string = account_email;
+    screen = "account_login";
+    exit;
 }
 
 if (screen == "local_roster" && roster_editing) {
@@ -40,7 +114,15 @@ if (screen == "pause") {
     exit;
 }
 
-if (keyboard_check_pressed(vk_escape)) {
+var _menu_has_back_button = screen == "hub" || screen == "shop" || screen == "inventory" || screen == "pack_shop" || screen == "pack_result" || screen == "mode" || screen == "trading" || screen == "trade_up" || screen == "trade_up_select" || screen == "trade_up_reward" || screen == "setup" || screen == "collection" || screen == "local_roster";
+var _menu_back_clicked = false;
+if (_menu_has_back_button && mouse_check_button_pressed(mb_left)) {
+    var _menu_back_x = device_mouse_x_to_gui(0);
+    var _menu_back_y = device_mouse_y_to_gui(0);
+    _menu_back_clicked = _menu_back_x >= 20 && _menu_back_x <= 180 && _menu_back_y >= 18 && _menu_back_y <= 62;
+}
+
+if (keyboard_check_pressed(vk_escape) || _menu_back_clicked) {
     if (screen == "battle" || screen == "handoff") {
         screen_before_pause = screen;
         screen = "pause";
@@ -76,10 +158,12 @@ if (keyboard_check_pressed(vk_escape)) {
     } else if (screen == "hub") {
         screen = "main";
     } else if (screen == "collection") {
+        collection_start_after_confirm = false;
         screen = collection_return_screen;
     } else {
         screen = "main";
     }
+    if (_menu_back_clicked) exit;
 }
 
 switch (screen) {
@@ -391,7 +475,7 @@ switch (screen) {
         if (keyboard_check_pressed(vk_up)) roster_selected = max(0, roster_selected - 1);
         if (keyboard_check_pressed(vk_down)) roster_selected = min(setup_players - 1, roster_selected + 1);
         if (keyboard_check_pressed(ord("B"))) local_player_bots[roster_selected] = !local_player_bots[roster_selected];
-        if (keyboard_check_pressed(ord("C"))) open_collection("local_roster", roster_selected);
+        if (keyboard_check_pressed(ord("C"))) open_collection("local_roster", roster_selected, false);
         if (keyboard_check_pressed(vk_enter)) {
             roster_editing = true;
             roster_original_name = local_player_names[roster_selected];
@@ -411,7 +495,7 @@ switch (screen) {
                 var _roster_click_y = 205 + _roster_click_row * 92;
                 if (_roster_mx >= _roster_click_x && _roster_mx <= _roster_click_x + 570 && _roster_my >= _roster_click_y && _roster_my <= _roster_click_y + 72) roster_selected = _roster_click;
             }
-            if (_roster_my >= 700 && _roster_my < 760) open_collection("local_roster", roster_selected);
+            if (_roster_my >= 700 && _roster_my < 760) open_collection("local_roster", roster_selected, false);
             if (_roster_my >= 760 && _roster_my <= 815) start_match();
         }
         break;
@@ -465,7 +549,12 @@ switch (screen) {
 
         if ((keyboard_check_pressed(vk_enter) || (mouse_check_button_pressed(mb_left) && device_mouse_y_to_gui(0) >= 805)) && array_length(collection_selected_ids) == setup_team_size) {
             if (collection_context_seat >= 0) local_player_lineups[collection_context_seat] = copy_lineup(collection_selected_ids); else bot_lineup_ids = copy_lineup(collection_selected_ids);
-            screen = collection_return_screen;
+            if (collection_start_after_confirm) {
+                collection_start_after_confirm = false;
+                start_match();
+            } else {
+                screen = collection_return_screen;
+            }
         }
         break;
 
@@ -473,12 +562,12 @@ switch (screen) {
         var _setup_changed = false;
         if (keyboard_check_pressed(vk_up)) { setup_players = min(8, setup_players + 1); _setup_changed = true; }
         if (keyboard_check_pressed(vk_down)) { setup_players = max(2, setup_players - 1); _setup_changed = true; }
-        if (keyboard_check_pressed(vk_right)) { setup_team_size = min(4, setup_team_size + 1); _setup_changed = true; }
-        if (keyboard_check_pressed(vk_left)) { setup_team_size = max(2, setup_team_size - 1); _setup_changed = true; }
+        if (keyboard_check_pressed(vk_right)) { setup_team_size = min(3, setup_team_size + 1); _setup_changed = true; }
+        if (keyboard_check_pressed(vk_left)) { setup_team_size = max(1, setup_team_size - 1); _setup_changed = true; }
         if (play_mode == "bot" && keyboard_check_pressed(ord("D"))) { setup_difficulty = (setup_difficulty + 1) mod 3; _setup_changed = true; }
         if (play_mode == "bot" && keyboard_check_pressed(ord("S"))) { setup_bot_speed = (setup_bot_speed + 1) mod 3; _setup_changed = true; }
         if (_setup_changed) save_setup_for_mode(play_mode);
-        if (play_mode == "bot" && keyboard_check_pressed(ord("C"))) open_collection("setup", -1);
+        if (play_mode == "bot" && keyboard_check_pressed(ord("C"))) open_collection("setup", -1, false);
         if (keyboard_check_pressed(vk_enter)) {
             if (array_length(owned_pet_ids) < setup_team_size) {
                 economy_message = "You need " + string(setup_team_size) + " different Battlepets for this team size.";
@@ -486,18 +575,23 @@ switch (screen) {
                 prepare_local_roster();
                 screen = "local_roster";
             } else {
-                start_match();
+                open_collection("setup", -1, true);
             }
         }
         if (mouse_check_button_pressed(mb_left)) {
             var _setup_mx = device_mouse_x_to_gui(0);
             var _setup_my = device_mouse_y_to_gui(0);
-            if (_setup_my >= 280 && _setup_my <= 350) { setup_players += _setup_mx < 800 ? -1 : 1; setup_players = clamp(setup_players, 2, 8); save_setup_for_mode(play_mode); }
-            if (_setup_my >= 410 && _setup_my <= 480) { setup_team_size += _setup_mx < 800 ? -1 : 1; setup_team_size = clamp(setup_team_size, 2, 4); save_setup_for_mode(play_mode); }
-            if (play_mode == "bot" && _setup_my >= 495 && _setup_my < 555) { setup_difficulty = (setup_difficulty + 1) mod 3; save_setup_for_mode(play_mode); }
-            if (play_mode == "bot" && _setup_my >= 555 && _setup_my < 615) { setup_bot_speed = (setup_bot_speed + 1) mod 3; save_setup_for_mode(play_mode); }
-            if (play_mode == "bot" && _setup_my >= 615 && _setup_my < 675) open_collection("setup", -1);
-            if (_setup_my >= (play_mode == "bot" ? 685 : 620) && _setup_my <= 760) keyboard_key_press(vk_enter);
+            if (_setup_my >= 140 && _setup_my <= 210) { setup_players += _setup_mx < 800 ? -1 : 1; setup_players = clamp(setup_players, 2, 8); save_setup_for_mode(play_mode); }
+            if (_setup_my >= 285 && _setup_my <= 555) {
+                if (_setup_mx >= 100 && _setup_mx <= 500) setup_team_size = 1;
+                if (_setup_mx >= 600 && _setup_mx <= 1000) setup_team_size = 2;
+                if (_setup_mx >= 1100 && _setup_mx <= 1500) setup_team_size = 3;
+                save_setup_for_mode(play_mode);
+            }
+            if (play_mode == "bot" && _setup_my >= 580 && _setup_my < 625) { setup_difficulty = (setup_difficulty + 1) mod 3; save_setup_for_mode(play_mode); }
+            if (play_mode == "bot" && _setup_my >= 630 && _setup_my < 675) { setup_bot_speed = (setup_bot_speed + 1) mod 3; save_setup_for_mode(play_mode); }
+            if (play_mode == "bot" && _setup_my >= 680 && _setup_my < 725) open_collection("setup", -1, false);
+            if (_setup_my >= (play_mode == "bot" ? 750 : 620) && _setup_my <= (play_mode == "bot" ? 815 : 695)) keyboard_key_press(vk_enter);
         }
         break;
 
@@ -538,35 +632,61 @@ switch (screen) {
             var _battle_my = device_mouse_y_to_gui(0);
             var _battle_team_size = array_length(_player.pets);
             if (_battle_my < 88 && _battle_mx >= 1420) { screen_before_pause = "battle"; screen = "pause"; break; }
-            for (var _battle_player_click = 0; _battle_player_click < array_length(match.players); _battle_player_click++) {
-                var _battle_panel_x = 25 + (_battle_player_click mod 4) * 392;
-                var _battle_panel_y = 100 + (_battle_player_click div 4) * 335;
-                var _battle_pet_rows = ceil(_battle_team_size / 2);
-                var _battle_card_width = 172;
-                var _battle_card_height = (199 - (_battle_pet_rows - 1) * 6) / _battle_pet_rows;
-                for (var _battle_pet_click = 0; _battle_pet_click < _battle_team_size; _battle_pet_click++) {
-                    var _battle_card_x = _battle_panel_x + 10 + (_battle_pet_click mod 2) * 178;
-                    var _battle_card_y = _battle_panel_y + 96 + (_battle_pet_click div 2) * (_battle_card_height + 6);
-                    if (_battle_mx >= _battle_card_x && _battle_mx <= _battle_card_x + _battle_card_width && _battle_my >= _battle_card_y && _battle_my <= _battle_card_y + _battle_card_height) {
-                        if (_battle_player_click == _current && bp_pet_alive(_player.pets[_battle_pet_click]) && _player.pets[_battle_pet_click].stun_turns <= 0) selected_actor = _battle_pet_click;
-                        if (_battle_player_click != _current && bp_action_is_legal(match, _current, selected_actor, selected_action, _battle_player_click, _battle_pet_click)) selected_target = _battle_player_click * _battle_team_size + _battle_pet_click;
+
+            // In 3+ player battles, choose which opposing player is shown on the right.
+            if (array_length(match.players) > 2 && _battle_my >= 72 && _battle_my <= 177) {
+                var _opponent_button = 0;
+                for (var _opponent_index = 0; _opponent_index < array_length(match.players); _opponent_index++) {
+                    if (_opponent_index == _current) continue;
+                    var _opponent_x = 760 + (_opponent_button mod 4) * 205;
+                    var _opponent_y = 72 + (_opponent_button div 4) * 55;
+                    if (_battle_mx >= _opponent_x && _battle_mx <= _opponent_x + 190 && _battle_my >= _opponent_y && _battle_my <= _opponent_y + 45) {
+                        battle_view_player = _opponent_index;
+                        selected_target = -1;
+                        for (var _tab_target_slot = 0; _tab_target_slot < _battle_team_size; _tab_target_slot++) {
+                            if (bp_action_is_legal(match, _current, selected_actor, selected_action, _opponent_index, _tab_target_slot)) {
+                                selected_target = _opponent_index * _battle_team_size + _tab_target_slot;
+                                break;
+                            }
+                        }
+                        battle_action_armed = false;
+                    }
+                    _opponent_button += 1;
+                }
+            }
+
+            // Select one of the current player's pets on the left.
+            for (var _own_pet_click = 0; _own_pet_click < _battle_team_size; _own_pet_click++) {
+                var _own_pet_x = 80;
+                var _own_pet_y = _battle_team_size <= 1 ? 350 : 175 + _own_pet_click * (405 / (_battle_team_size - 1));
+                if (_battle_mx >= _own_pet_x && _battle_mx <= _own_pet_x + 575 && _battle_my >= _own_pet_y - 8 && _battle_my <= _own_pet_y + 132) {
+                    if (bp_pet_alive(_player.pets[_own_pet_click]) && _player.pets[_own_pet_click].stun_turns <= 0) {
+                        selected_actor = _own_pet_click;
+                        battle_action_armed = false;
                     }
                 }
             }
-            if (_battle_my >= 790) {
-                if (_battle_mx < 255) selected_action = "basic";
-                else if (_battle_mx < 475) selected_action = "super";
-                else if (_battle_mx < 695) selected_action = "card";
-                else if (_battle_mx < 895) { controls_open = true; details_open = false; break; }
-                else if (_battle_mx < 1095) {
-                    details_open = !details_open;
-                    if (details_open) { detail_player = selected_target >= 0 ? selected_target div _battle_team_size : _current; detail_slot = selected_target >= 0 ? selected_target mod _battle_team_size : selected_actor; }
-                    break;
-                } else if (selected_target >= 0) {
-                    var _click_target_player = selected_target div _battle_team_size;
-                    var _click_target_slot = selected_target mod _battle_team_size;
-                    present_action(_current, selected_actor, selected_action, _click_target_player, _click_target_slot);
-                    break;
+
+            // Attack buttons arm an action; clicking an enemy pet performs it.
+            if (_battle_my >= 735 && _battle_my <= 805) {
+                if (_battle_mx >= 100 && _battle_mx <= 370) { selected_action = "basic"; battle_action_armed = true; }
+                if (_battle_mx >= 400 && _battle_mx <= 670) { selected_action = "super"; battle_action_armed = true; }
+                if (_battle_mx >= 700 && _battle_mx <= 970) { selected_action = "card"; battle_action_armed = true; }
+            }
+
+            if (battle_view_player == _current || battle_view_player < 0 || battle_view_player >= array_length(match.players)) battle_view_player = (_current + 1) mod array_length(match.players);
+            for (var _enemy_pet_click = 0; _enemy_pet_click < _battle_team_size; _enemy_pet_click++) {
+                var _enemy_pet_x = 945;
+                var _enemy_pet_y = _battle_team_size <= 1 ? 350 : 175 + _enemy_pet_click * (405 / (_battle_team_size - 1));
+                if (_battle_mx >= _enemy_pet_x && _battle_mx <= _enemy_pet_x + 575 && _battle_my >= _enemy_pet_y - 8 && _battle_my <= _enemy_pet_y + 132) {
+                    if (bp_action_is_legal(match, _current, selected_actor, selected_action, battle_view_player, _enemy_pet_click)) {
+                        selected_target = battle_view_player * _battle_team_size + _enemy_pet_click;
+                        if (battle_action_armed) {
+                            battle_action_armed = false;
+                            present_action(_current, selected_actor, selected_action, battle_view_player, _enemy_pet_click);
+                            exit;
+                        }
+                    }
                 }
             }
         }
@@ -616,9 +736,9 @@ switch (screen) {
             break;
         }
 
-        if (keyboard_check_pressed(ord("1"))) selected_action = "basic";
-        if (keyboard_check_pressed(ord("2"))) selected_action = "super";
-        if (keyboard_check_pressed(ord("3"))) selected_action = "card";
+        if (keyboard_check_pressed(ord("1"))) { selected_action = "basic"; battle_action_armed = true; }
+        if (keyboard_check_pressed(ord("2"))) { selected_action = "super"; battle_action_armed = true; }
+        if (keyboard_check_pressed(ord("3"))) { selected_action = "card"; battle_action_armed = true; }
 
         if (keyboard_check_pressed(ord("Q")) || keyboard_check_pressed(ord("E"))) {
             var _direction = keyboard_check_pressed(ord("Q")) ? -1 : 1;
@@ -639,6 +759,7 @@ switch (screen) {
             var _from = selected_target < 0 ? -1 : selected_target;
             selected_target = bp_find_legal_target(match, _current, selected_actor, selected_action, _from, _target_direction == 0 ? 1 : _target_direction);
         }
+        if (selected_target >= 0) battle_view_player = selected_target div array_length(_player.pets);
 
         if (keyboard_check_pressed(vk_enter) && selected_target >= 0) {
             var _target_player = selected_target div array_length(_player.pets);
@@ -648,6 +769,9 @@ switch (screen) {
         break;
 
     case "result":
-        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space) || mouse_check_button_pressed(mb_left)) screen = "main";
+        if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space) || mouse_check_button_pressed(mb_left)) {
+            tutorial = false;
+            screen = "main";
+        }
         break;
 }

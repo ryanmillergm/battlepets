@@ -59,7 +59,13 @@
 - [x] Define the initial PostgreSQL/Prisma account, profile, content, inventory, currency, lobby, match, and action schema.
 - [x] Add local PostgreSQL and Mailpit services through Docker Compose.
 - [x] Build the React/Vite admin navigation and service-health shell.
-- [ ] Implement authentication, MFA, authorization, and audit logging.
+- [-] Implement authentication, MFA, authorization, and audit logging. Invite-only player registration, verification, login, rotating sessions, password recovery, and profile lookup are implemented; admin MFA/authorization/audit operations remain.
+- [x] Add initial Prisma migrations, Mailpit/Mailtrap email adapters, account integration tests, and fail-closed registration modes.
+- [x] Add GitHub CI definitions for PostgreSQL-backed service tests, admin builds, GameMaker source checks, staging-only production promotion, immutable container builds, and post-test deployment.
+- [-] Connect the GameMaker launch flow to signup, verification, login, offline mode, and device-bound session restoration; packaged Windows hands-on verification remains.
+- [x] Add protected one-use owner/tester invitations, preserve the reserved Glitch username, bind the verified badge to an account UUID, and add a local-only client server override.
+- [x] Make Offline a temporary unverified Guest session with 0 starting Battle Coins and prevent its currency, inventory, and setup changes from being written to the local save.
+- [ ] Deploy staging. The inspected existing Droplet has only 1 GB total RAM and is blocked until Dad supplies at least 2 GiB free RAM and 10 GiB free disk without risking its existing website.
 - [ ] Implement admin CRUD, validation, preview, versioning, and publishing APIs/forms.
 
 ## Verification completed
@@ -76,6 +82,7 @@
 - [x] Service health smoke test completed successfully.
 - [x] Admin production build completed successfully.
 - [x] Server and admin dependency audits reported no known vulnerabilities at the time checked.
+- [x] Local PostgreSQL migrations and all eight server tests passed on November 14, 2026, including owner-invite protection, one-use invites, ordinary alternate registration, and account-ID-only verification.
 
 ## Later milestones
 

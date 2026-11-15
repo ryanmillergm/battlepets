@@ -13,7 +13,14 @@ enum AccountRole {
   ADMIN
 }
 
+enum AccountStatus {
+  PENDING_EMAIL
+  ACTIVE
+  DISABLED
+}
+
 enum ProfileAgeBand {
+  UNSPECIFIED
   CHILD
   TEEN
   ADULT
@@ -42,11 +49,15 @@ model Account {
   passwordHash       String
   emailVerifiedAt    DateTime?
   role               AccountRole     @default(USER)
+  status             AccountStatus   @default(PENDING_EMAIL)
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   profiles           PlayerProfile[]
   consentReceipts    ConsentReceipt[]
   currencyEntries    CurrencyLedger[]
+  emailTokens        EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  sessions           AuthSession[]
 }
 
 model PlayerProfile {
@@ -54,6 +65,7 @@ model PlayerProfile {
   ownerAccountId     String
   username           String
   normalizedUsername String          @unique
+  displayName        String
   avatarId           String
   ageBand            ProfileAgeBand
   chatEnabled        Boolean         @default(false)
@@ -64,6 +76,60 @@ model PlayerProfile {
   inventory          InventoryItem[]
   lobbyMemberships   LobbyMember[]
   matchParticipants  MatchParticipant[]
+}
+
+model Invitation {
+  id          String   @id @default(uuid())
+  codeHash    String   @unique
+  label       String?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  usedById    String?  @unique
+  createdAt   DateTime @default(now())
+
+  @@index([expiresAt, usedAt])
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(uuid())
+  accountId  String
+  tokenHash  String    @unique
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(uuid())
+  accountId  String
+  tokenHash  String    @unique
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, expiresAt])
+}
+
+model AuthSession {
+  id               String    @id @default(uuid())
+  accountId        String
+  familyId         String
+  refreshTokenHash String    @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  replacedById     String?
+  createdAt        DateTime  @default(now())
+  lastUsedAt       DateTime  @default(now())
+  account          Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, familyId])
+  @@index([expiresAt])
 }
 
 model ConsentReceipt {

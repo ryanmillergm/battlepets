@@ -20,9 +20,11 @@ function bp_run_self_tests(_catalog) {
         _passed = bp_test_check(bp_pack_roll_rarity(_catalog.packs[_pack_test], 0) <= _catalog.packs[_pack_test].maximum_rarity, "pack minimum roll respects tier") && _passed;
         _passed = bp_test_check(bp_pack_roll_rarity(_catalog.packs[_pack_test], 99) <= _catalog.packs[_pack_test].maximum_rarity, "pack maximum roll respects tier") && _passed;
     }
-    _passed = bp_test_check(_catalog.packs[3].weights[3] == 3, "Legendary pack has 3 percent total for Axle and Porcha & Mercadies") && _passed;
+    _passed = bp_test_check(_catalog.packs[3].weights[3] == 10, "Legendary pack has 10 percent total legendary chance") && _passed;
     _passed = bp_test_check(_catalog.pets[1].fixed_legendary_chance == 1.5 && _catalog.pets[5].fixed_legendary_chance == 1.5, "Axle and Porcha & Mercadies stay fixed at 1.5 percent") && _passed;
-    _passed = bp_test_check(_catalog.packs[2].weights[2] == 20, "Epic pack gives Bailly and Jack 10 percent each") && _passed;
+    _passed = bp_test_check(_catalog.pets[0].rarity == 3 && _catalog.pets[0].legendary_pack_chance == 2, "Bailly is Legendary with a 2 percent pack chance") && _passed;
+    _passed = bp_test_check(_catalog.pets[8].legendary_pack_chance == 5, "Luna has a 5 percent Legendary pack chance") && _passed;
+    _passed = bp_test_check(_catalog.packs[2].weights[2] == 20, "Epic pack keeps a 20 percent epic chance") && _passed;
 
     for (var _players = 2; _players <= 8; _players++) {
         for (var _team_size = 2; _team_size <= 4; _team_size++) {
@@ -66,6 +68,44 @@ function bp_run_self_tests(_catalog) {
     _multi_match.players[1].pets[3].health = 0;
     var _multi_acted = bp_apply_action(_multi_match, 0, 0, "super", 1, 0);
     _passed = bp_test_check(_multi_acted && _multi_match.players[1].pets[0].health == 380, "Axle Multistrike deals 40 per living opposing pet") && _passed;
+
+    var _double_hair_match = bp_match_create(_catalog, ["Porcha Test", "Opponent"], [false, false], 1, 0);
+    _double_hair_match.order = [0, 1];
+    _double_hair_match.order_index = 0;
+    _double_hair_match.players[0].pets[0] = bp_pet_state_create(_catalog.pets[1]);
+    _double_hair_match.players[1].pets[0].health = 160;
+    var _double_hair_acted = bp_apply_action(_double_hair_match, 0, 0, "super", 1, 0);
+    _passed = bp_test_check(_double_hair_acted && bp_current_player_index(_double_hair_match) == 0, "Porcha & Mercadies Double Hair grants another turn") && _passed;
+    _passed = bp_test_check(string_pos("another turn", _double_hair_match.last_message) > 0, "Double Hair extra turn is announced") && _passed;
+
+    var _luna_match = bp_match_create(_catalog, ["Luna Test", "Opponent"], [false, false], 1, 0);
+    _luna_match.order = [0, 1];
+    _luna_match.order_index = 0;
+    _luna_match.players[0].pets[0] = bp_pet_state_create(_catalog.pets[8]);
+    _luna_match.players[1].pets[0].health = 105;
+    var _luna_acted = bp_apply_action(_luna_match, 0, 0, "super", 1, 0);
+    _passed = bp_test_check(_luna_acted && _luna_match.players[1].pets[0].health == 35, "Luna Tuna Breath deals 70 damage") && _passed;
+    _passed = bp_test_check(_luna_match.players[1].pets[0].stun_turns == 1, "Luna Tuna Breath stuns its target for one turn") && _passed;
+    _passed = bp_test_check(bp_current_player_index(_luna_match) == 0, "Luna Tuna Breath grants another turn") && _passed;
+    _passed = bp_test_check(string_pos("another turn", _luna_match.last_message) > 0, "Luna extra turn is announced") && _passed;
+
+    var _bailly_match = bp_match_create(_catalog, ["Bailly Test", "Opponent"], [false, false], 1, 0);
+    _bailly_match.order = [0, 1];
+    _bailly_match.order_index = 0;
+    _bailly_match.players[0].pets[0] = bp_pet_state_create(_catalog.pets[0]);
+    _bailly_match.players[1].card = _catalog.cards[1];
+    var _bailly_acted = bp_apply_action(_bailly_match, 0, 0, "super", 1, 0);
+    _passed = bp_test_check(_bailly_acted && _bailly_match.players[1].pets[0].health == 0, "Pretty Princess puts its target to sleep") && _passed;
+    _passed = bp_test_check(string_pos("until revived", _bailly_match.last_message) > 0, "Pretty Princess explains the target can be revived") && _passed;
+    _passed = bp_test_check(_bailly_match.players[0].pets[0].stun_turns == 3, "Pretty Princess makes Bailly rest for the next three rounds") && _passed;
+    var _bailly_revived = bp_apply_action(_bailly_match, 1, 0, "card", 1, 0);
+    _passed = bp_test_check(_bailly_revived && _bailly_match.players[1].pets[0].health > 0, "Pretty Princess target can be revived") && _passed;
+    var _bailly_cannot_act = !bp_apply_action(_bailly_match, 0, 0, "basic", 1, 0);
+    _passed = bp_test_check(_bailly_cannot_act, "Bailly cannot attack while resting") && _passed;
+    _bailly_match.order_index = 1;
+    var _bailly_health_before_targeted = _bailly_match.players[0].pets[0].health;
+    var _resting_bailly_targeted = bp_apply_action(_bailly_match, 1, 0, "basic", 0, 0);
+    _passed = bp_test_check(_resting_bailly_targeted && _bailly_match.players[0].pets[0].health < _bailly_health_before_targeted, "Resting Bailly can still be targeted and damaged") && _passed;
 
     var _ghost_match = bp_match_create(_catalog, ["Ghost Owner", "Opponent"], [false, false], 2, 0);
     _ghost_match.order = [0, 1];

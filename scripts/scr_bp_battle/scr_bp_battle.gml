@@ -160,6 +160,8 @@ function bp_apply_action(_match, _player_index, _actor_slot, _action, _target_pl
     var _target_owner = _match.players[_target_player];
     var _target = _target_owner.pets[_target_slot];
     var _message = "";
+    var _extra_turn = false;
+    var _sleep_knockout = false;
 
     // A hostile attack attempt counts even when a shield prevents damage.
     if (_target_player != _player_index && (_action != "card" || _player.card.effect == "damage" || _player.card.effect == "stun")) {
@@ -197,22 +199,35 @@ function bp_apply_action(_match, _player_index, _actor_slot, _action, _target_pl
         if (_action == "super") {
             _actor.super_used = true;
             if (_actor.definition.id == "ghost_axle") _actor.ghostability_active = true;
+            if (_actor.definition.id == "porcha_mercadies" || _actor.definition.id == "luna") _extra_turn = true;
+            // The current turn's advance immediately removes one stun counter, so
+            // four counters here leave Bailly unavailable for her next three rounds.
+            if (_actor.definition.id == "bailly") _actor.stun_turns = max(_actor.stun_turns, 4);
         }
         var _attack_damage = _attack.damage;
         if (_attack.per_target_pet) _attack_damage *= bp_player_living_pet_count(_target_owner);
-        var _damage = bp_damage_pet(_target, _attack_damage + _actor.attack_bonus, _attack.unblockable);
+        var _damage = 0;
+        if (_action == "super" && _actor.definition.id == "bailly") {
+            _sleep_knockout = true;
+            _target.damage_avoided = false;
+            _damage = _target.health;
+            _target.health = 0;
+        } else {
+            _damage = bp_damage_pet(_target, _attack_damage + _actor.attack_bonus, _attack.unblockable);
+        }
         if (_attack.stun > 0 && _damage > 0 && bp_pet_alive(_target)) _target.stun_turns = max(_target.stun_turns, _attack.stun);
         _message = _player.name + "'s " + _actor.definition.name + " used " + _attack.name + " on " + _target.definition.name;
-        _message += _target.damage_avoided ? ", but Ghost Axle phased through it." : (_damage == 0 ? ", but a shield blocked it." : " for " + string(_damage) + " damage.");
+        _message += _sleep_knockout ? ". " + _target.definition.name + " fell asleep and is out until revived. Bailly must rest for 3 rounds, but can still be attacked." : (_target.damage_avoided ? ", but Ghost Axle phased through it." : (_damage == 0 ? ", but a shield blocked it." : " for " + string(_damage) + " damage."));
         if (_attack.stun > 0 && _damage > 0 && bp_pet_alive(_target)) _message += " " + _target.definition.name + " is stunned for its next turn.";
+        if (_extra_turn) _message += " " + _actor.definition.name + " gets another turn!";
     }
 
-    if (_target.health <= 0) _message += " " + _target.definition.name + " was knocked out!";
+    if (_target.health <= 0 && !_sleep_knockout) _message += " " + _target.definition.name + " was knocked out!";
     _match.action_number += 1;
     _match.last_message = _message;
     array_push(_match.log, _message);
     bp_update_eliminations(_match);
-    if (_match.phase == "active") bp_advance_turn(_match);
+    if (_match.phase == "active" && !_extra_turn) bp_advance_turn(_match);
     return true;
 }
 

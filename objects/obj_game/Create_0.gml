@@ -5,18 +5,91 @@ title_font = font_add("Arial", 190, true, false, 32, 127);
 catalog = bp_catalog_create();
 global.bp_self_tests_passed = bp_run_self_tests(catalog);
 
-account_id = "owner_glitch";
-account_username = "Glitch";
-account_verified = account_id == "owner_glitch";
+account_id = "";
+account_username = "Guest";
+account_verified = false;
+offline_mode = false;
+account_api_url = "https://battlepets-staging.duckdns.org";
+if (file_exists("battlepets_local_server.ini")) {
+    ini_open("battlepets_local_server.ini");
+    account_api_url = ini_read_string("account", "api_url", account_api_url);
+    ini_close();
+}
+account_access_token = "";
+account_refresh_token = "";
+account_request_id = -1;
+account_request_kind = "";
+account_message = "";
+account_busy = false;
+account_field = 0;
+account_email = "";
+account_password = "";
+account_invite = "";
+account_new_username = "";
+account_display_name = "";
+account_code = "";
+account_new_password = "";
+
+account_set_keyboard = function() {
+    if (screen == "account_login") keyboard_string = account_field == 0 ? account_email : account_password;
+    if (screen == "account_signup") {
+        var _values = [account_invite, account_email, account_password, account_new_username, account_display_name];
+        keyboard_string = _values[account_field];
+    }
+    if (screen == "account_verify") keyboard_string = account_code;
+    if (screen == "account_forgot") keyboard_string = account_email;
+    if (screen == "account_reset") keyboard_string = account_field == 0 ? account_code : account_new_password;
+};
+
+account_send = function(_kind, _path, _payload, _access_token) {
+    if (account_busy) return false;
+    var _headers = ds_map_create();
+    ds_map_add(_headers, "Content-Type", "application/json");
+    if (_access_token != "") ds_map_add(_headers, "Authorization", "Bearer " + _access_token);
+    account_request_id = http_request(account_api_url + _path, "POST", _headers, json_stringify(_payload));
+    ds_map_destroy(_headers);
+    account_request_kind = _kind;
+    account_busy = true;
+    account_message = "Connecting...";
+    return true;
+};
+
+account_save_refresh = function(_token) {
+    var _secure = ds_map_create();
+    ds_map_add(_secure, "refresh_token", _token);
+    ds_map_secure_save(_secure, "battlepets_session.dat");
+    ds_map_destroy(_secure);
+};
+
+account_clear_refresh = function() {
+    if (file_exists("battlepets_session.dat")) file_delete("battlepets_session.dat");
+    account_refresh_token = "";
+};
+
+enter_offline_guest = function() {
+    offline_mode = true;
+    account_id = "guest";
+    account_username = "Guest";
+    account_verified = false;
+    // Leave any saved online session on disk, but never use it during this
+    // temporary guest session.
+    account_access_token = "";
+    account_refresh_token = "";
+    battle_coins = 0;
+    account_busy = false;
+    account_message = "";
+    keyboard_string = "";
+    screen = "main";
+};
 
 ini_open("battlepets_save.ini");
 battle_coins = max(0, floor(ini_read_real("currency", "battle_coins", 0)));
 saved_bot_players = clamp(floor(ini_read_real("bot_setup", "players", 2)), 2, 8);
-saved_bot_team_size = clamp(floor(ini_read_real("bot_setup", "team_size", 2)), 2, 4);
+saved_bot_team_size = clamp(floor(ini_read_real("bot_setup", "team_size", 2)), 1, 3);
 saved_bot_difficulty = clamp(floor(ini_read_real("bot_setup", "difficulty", 0)), 0, 2);
 saved_bot_speed = clamp(floor(ini_read_real("bot_setup", "speed", 0)), 0, 2);
 saved_local_players = clamp(floor(ini_read_real("local_setup", "players", 2)), 2, 8);
-saved_local_team_size = clamp(floor(ini_read_real("local_setup", "team_size", 2)), 2, 4);
+saved_local_team_size = clamp(floor(ini_read_real("local_setup", "team_size", 2)), 1, 3);
 pet_quantities = [];
 for (var _inventory_load = 0; _inventory_load < array_length(catalog.pets); _inventory_load++) {
     var _loaded_quantity = max(0, floor(ini_read_real("inventory", catalog.pets[_inventory_load].id, 1)));
@@ -25,7 +98,7 @@ for (var _inventory_load = 0; _inventory_load < array_length(catalog.pets); _inv
 }
 ini_close();
 
-screen = "main";
+screen = "account_login";
 screen_before_pause = "battle";
 play_mode = "bot";
 setup_players = saved_bot_players;
@@ -36,6 +109,9 @@ match = undefined;
 selected_actor = 0;
 selected_action = "basic";
 selected_target = -1;
+battle_view_player = 1;
+battle_display_player = 0;
+battle_action_armed = false;
 bot_delay = 30;
 tutorial = false;
 details_open = false;
@@ -63,6 +139,7 @@ collection_cursor = 0;
 collection_scroll_row = 0;
 collection_return_screen = "setup";
 collection_context_seat = -1;
+collection_start_after_confirm = false;
 collection_slot_count = 12;
 hub_cursor = 1;
 trading_cursor = 0;
@@ -78,6 +155,17 @@ inventory_cursor = array_length(catalog.pets) - 1;
 inventory_scroll_row = max(0, ceil(array_length(catalog.pets) / 4) - 2);
 sale_confirm_stage = 0;
 economy_message = "";
+
+if (file_exists("battlepets_session.dat")) {
+    var _saved_session = ds_map_secure_load("battlepets_session.dat");
+    if (_saved_session != -1) {
+        account_refresh_token = ds_map_find_value(_saved_session, "refresh_token");
+        ds_map_destroy(_saved_session);
+        if (is_string(account_refresh_token) && account_refresh_token != "") {
+            account_send("refresh", "/v1/auth/refresh", { refreshToken: account_refresh_token }, "");
+        }
+    }
+}
 
 rarity_names = ["Basic", "Uncommon", "Epic", "Legendary", "Exalted"];
 rarity_sale_values = [5, 10, 20, 30, 50];
@@ -96,19 +184,22 @@ can_sell_pet = function(_pet_index) {
 };
 
 bot_think_delays = [90, 50, 18];
-bot_action_delays = [110, 75, 45];
+// Keep opponent action details readable even when fast bot turns are selected.
+bot_action_delays = [180, 150, 120];
 
 get_bot_think_delay = function() {
     return bot_think_delays[setup_bot_speed];
 };
 
 save_battle_coins = function() {
+    if (offline_mode) return;
     ini_open("battlepets_save.ini");
     ini_write_real("currency", "battle_coins", battle_coins);
     ini_close();
 };
 
 save_economy = function() {
+    if (offline_mode) return;
     ini_open("battlepets_save.ini");
     ini_write_real("currency", "battle_coins", battle_coins);
     for (var _save_pet = 0; _save_pet < array_length(catalog.pets); _save_pet++) {
@@ -171,26 +262,27 @@ trade_up_selected_total = function() {
     return _selected_total;
 };
 
-choose_weighted_reward = function(_candidates, _chance_space) {
+choose_weighted_reward = function(_candidates, _chance_space, _use_pack_chance) {
     if (array_length(_candidates) <= 0) return undefined;
     var _fixed_total = 0;
     var _ordinary = [];
     for (var _candidate_scan = 0; _candidate_scan < array_length(_candidates); _candidate_scan++) {
         var _candidate_index = _candidates[_candidate_scan];
-        var _fixed_chance = catalog.pets[_candidate_index].fixed_legendary_chance;
+        var _fixed_chance = _use_pack_chance ? catalog.pets[_candidate_index].legendary_pack_chance : catalog.pets[_candidate_index].fixed_legendary_chance;
         if (_fixed_chance > 0) _fixed_total += _fixed_chance; else array_push(_ordinary, _candidate_index);
     }
-    if (array_length(_ordinary) <= 0 || _fixed_total >= _chance_space) return _candidates[irandom(array_length(_candidates) - 1)];
+    if (_fixed_total <= 0) return _candidates[irandom(array_length(_candidates) - 1)];
     var _reward_roll = random(_chance_space);
     var _fixed_cursor = 0;
     for (var _fixed_scan = 0; _fixed_scan < array_length(_candidates); _fixed_scan++) {
         var _fixed_index = _candidates[_fixed_scan];
-        var _candidate_chance = catalog.pets[_fixed_index].fixed_legendary_chance;
+        var _candidate_chance = _use_pack_chance ? catalog.pets[_fixed_index].legendary_pack_chance : catalog.pets[_fixed_index].fixed_legendary_chance;
         if (_candidate_chance <= 0) continue;
         _fixed_cursor += _candidate_chance;
         if (_reward_roll < _fixed_cursor) return _fixed_index;
     }
-    return _ordinary[irandom(array_length(_ordinary) - 1)];
+    if (array_length(_ordinary) > 0) return _ordinary[irandom(array_length(_ordinary) - 1)];
+    return _candidates[array_length(_candidates) - 1];
 };
 
 perform_trade_up = function(_rarity) {
@@ -205,7 +297,7 @@ perform_trade_up = function(_rarity) {
     }
     if (array_length(_rewards) <= 0) return false;
     for (var _trade_remove_index = 0; _trade_remove_index < array_length(catalog.pets); _trade_remove_index++) pet_quantities[_trade_remove_index] -= trade_up_selected_counts[_trade_remove_index];
-    var _reward_index = _rarity + 1 == 3 ? choose_weighted_reward(_rewards, 100) : _rewards[irandom(array_length(_rewards) - 1)];
+    var _reward_index = _rarity + 1 == 3 ? choose_weighted_reward(_rewards, 100, false) : _rewards[irandom(array_length(_rewards) - 1)];
     pet_quantities[_reward_index] += 1;
     trade_up_reward_index = _reward_index;
     rebuild_owned_pet_ids();
@@ -223,7 +315,7 @@ draw_pack_pet = function(_pack, _excluded_id) {
         if (_draw_pet.rarity == _rarity && _draw_pet.id != _excluded_id && !_draw_pet.owner_only) array_push(_candidates, _draw_index);
     }
     if (array_length(_candidates) <= 0) return undefined;
-    var _chosen_index = _rarity == 3 ? choose_weighted_reward(_candidates, _pack.weights[_rarity]) : _candidates[irandom(array_length(_candidates) - 1)];
+    var _chosen_index = _rarity == 3 ? choose_weighted_reward(_candidates, _pack.weights[_rarity], true) : _candidates[irandom(array_length(_candidates) - 1)];
     return catalog.pets[_chosen_index].id;
 };
 
@@ -283,6 +375,7 @@ load_setup_for_mode = function(_mode) {
 };
 
 save_setup_for_mode = function(_mode) {
+    if (offline_mode) return;
     ini_open("battlepets_save.ini");
     if (_mode == "bot") {
         saved_bot_players = setup_players;
@@ -349,9 +442,10 @@ copy_lineup = function(_source) {
     return _result;
 };
 
-open_collection = function(_return_screen, _seat) {
+open_collection = function(_return_screen, _seat, _start_after_confirm) {
     collection_return_screen = _return_screen;
     collection_context_seat = _seat;
+    collection_start_after_confirm = _start_after_confirm;
     var _source = _seat >= 0 ? local_player_lineups[_seat] : bot_lineup_ids;
     if (array_length(_source) != setup_team_size) _source = default_lineup();
     collection_selected_ids = copy_lineup(_source);
@@ -396,6 +490,9 @@ start_match = function() {
     selected_action = "basic";
     selected_actor = bp_first_legal_actor(match, bp_current_player_index(match));
     selected_target = bp_find_legal_target(match, bp_current_player_index(match), selected_actor, selected_action, -1, 1);
+    battle_display_player = play_mode == "bot" ? 0 : bp_current_player_index(match);
+    battle_view_player = selected_target >= 0 ? selected_target div array_length(match.players[0].pets) : 0;
+    battle_action_armed = false;
     bot_delay = get_bot_think_delay();
     details_open = false;
     controls_open = false;
@@ -411,9 +508,12 @@ start_match = function() {
 reset_turn_selection = function() {
     if (match.phase != "active") exit;
     var _current = bp_current_player_index(match);
+    if (play_mode == "local") battle_display_player = _current;
     selected_action = "basic";
     selected_actor = bp_first_legal_actor(match, _current);
     selected_target = bp_find_legal_target(match, _current, selected_actor, selected_action, -1, 1);
+    battle_view_player = selected_target >= 0 ? selected_target div array_length(match.players[0].pets) : ((_current + 1) mod array_length(match.players));
+    battle_action_armed = false;
     bot_delay = match.players[_current].is_bot ? get_bot_think_delay() : 30;
 };
 
@@ -429,6 +529,9 @@ present_action = function(_player_index, _actor_slot, _action, _target_player, _
     }
 
     if (!bp_apply_action(match, _player_index, _actor_slot, _action, _target_player, _target_slot)) return false;
+
+    // Keep the human team anchored on the left; show the attacking bot on the right.
+    if (play_mode == "bot" && _player.is_bot) battle_view_player = _player_index;
 
     var _presentation_duration = _player.is_bot ? bot_action_delays[setup_bot_speed] : combat_fx_duration;
     combat_fx = {
